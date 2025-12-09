@@ -124,16 +124,12 @@ const App: React.FC = () => {
   // Admin View Logic
   if (currentView.startsWith('ADMIN')) {
     // Only allow admin access if user has ADMIN role (in a real app)
-    // For demo/dev we allow skipping login, but redirecting to Login if not logged in is better UX
-    // here allowing access for demonstration ease or checking user role
     if (currentView !== 'ADMIN_DASHBOARD' && user?.role !== 'ADMIN' && currentView.startsWith('ADMIN')) {
        // Optional: Redirect to login or home if strictly enforcing
-       // handleNavigate('LOGIN');
-       // return null;
     }
 
     return (
-      <AdminLayout currentView={currentView} onChangeView={handleNavigate}>
+      <AdminLayout currentView={currentView} onChangeView={handleNavigate} onLogout={handleLogout}>
         <div key={viewKey} className="animate-fadeInUp">
             {currentView === 'ADMIN_DASHBOARD' && <AdminDashboard onChangeView={handleNavigate} />}
             {currentView === 'ADMIN_PRODUCTS' && <AdminProducts />}
