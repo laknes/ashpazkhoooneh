@@ -1,0 +1,22 @@
+
+{
+  "name": "ashpazkhoneh",
+  "version": "1.0.0",
+  "description": "فروشگاه آنلاین لوازم آشپزخانه لوکس",
+  "main": "index.tsx",
+  "scripts": {
+    "start": "serve -s . -l 3000",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react",
+    "ecommerce",
+    "tailwindcss",
+    "ashpazkhoneh"
+  ],
+  "author": "Ashpazkhoneh Team",
+  "license": "ISC",
+  "dependencies": {
+    "serve": "^14.2.1"
+  }
+}
