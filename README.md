@@ -55,47 +55,47 @@ nano install.bash
 ```bash
 #!/bin/bash
 
-# رنگ‌ها برای نمایش بهتر
+# Colors for better visibility
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${BLUE}   نصب‌کننده خودکار فروشگاه آشپزخونه   ${NC}"
+echo -e "${BLUE}   Ashpazkhoneh Auto Installer   ${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
-# بررسی دسترسی روت
+# Check for root privileges
 if [ "$EUID" -ne 0 ]; then
-  echo -e "${RED}لطفاً این اسکریپت را با دسترسی root یا sudo اجرا کنید.${NC}"
+  echo -e "${RED}Please run this script as root or with sudo.${NC}"
   exit
 fi
 
-# ۱. دریافت تنظیمات از کاربر
+# 1. Gather Configuration
 echo ""
-echo -e "${GREEN}--- تنظیمات دامنه و شبکه ---${NC}"
-read -p "نام دامنه (بدون http/www، مثال: example.com): " DOMAIN_NAME
-read -p "ایمیل برای دریافت SSL (مثال: info@example.com): " SSL_EMAIL
-read -p "پورت داخلی برنامه [پیش‌فرض: 3000]: " APP_PORT
+echo -e "${GREEN}--- Domain & Network Settings ---${NC}"
+read -p "Domain Name (without http/www, e.g., example.com): " DOMAIN_NAME
+read -p "Email for SSL Certificate (e.g., info@example.com): " SSL_EMAIL
+read -p "App Internal Port [Default: 3000]: " APP_PORT
 APP_PORT=${APP_PORT:-3000}
 
 echo ""
-echo -e "${GREEN}--- تنظیمات دیتابیس ---${NC}"
-read -p "نام دیتابیس (Database Name): " DB_NAME
-read -p "نام کاربری دیتابیس (Database User): " DB_USER
-read -s -p "رمز عبور دیتابیس (Database Password): " DB_PASS
+echo -e "${GREEN}--- Database Settings ---${NC}"
+read -p "Database Name: " DB_NAME
+read -p "Database User: " DB_USER
+read -s -p "Database Password: " DB_PASS
 echo ""
 
 echo ""
-echo -e "${GREEN}--- تنظیمات مدیر سیستم ---${NC}"
-read -p "نام کاربری مدیر (Admin Username): " ADMIN_USER
-read -p "ایمیل مدیر (Admin Email): " ADMIN_EMAIL
-read -s -p "رمز عبور مدیر (Admin Password): " ADMIN_PASS
+echo -e "${GREEN}--- Admin Settings ---${NC}"
+read -p "Admin Username: " ADMIN_USER
+read -p "Admin Email: " ADMIN_EMAIL
+read -s -p "Admin Password: " ADMIN_PASS
 echo ""
 
-# ۲. ذخیره تنظیمات در فایل .env
+# 2. Save Configuration to .env
 echo ""
-echo "در حال ذخیره تنظیمات..."
+echo "Saving configuration..."
 cat > .env << EOL
 PORT=$APP_PORT
 DB_HOST=localhost
@@ -106,44 +106,44 @@ ADMIN_INIT_USER=$ADMIN_USER
 ADMIN_INIT_EMAIL=$ADMIN_EMAIL
 ADMIN_INIT_PASS=$ADMIN_PASS
 EOL
-echo "فایل .env ایجاد شد."
+echo ".env file created."
 
-# ۳. به‌روزرسانی سیستم و نصب پیش‌نیازها
+# 3. System Update & Dependencies
 echo ""
-echo "در حال به‌روزرسانی سیستم و نصب Node.js، Nginx و Certbot..."
+echo "Updating system and installing Node.js, Nginx, and Certbot..."
 apt update
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt install -y nodejs nginx certbot python3-certbot-nginx
 
-# ۴. نصب ابزارهای مدیریت پروسه
+# 4. Install Process Managers
 echo ""
-echo "در حال نصب PM2 و Serve..."
+echo "Installing PM2 and Serve..."
 npm install -g pm2 serve
 
-# ۵. نصب وابستگی‌های پروژه
+# 5. Install Project Dependencies
 echo ""
-echo "در حال نصب پکیج‌های پروژه..."
+echo "Installing project packages..."
 if [ -f "package.json" ]; then
     npm install
 else
-    echo "فایل package.json یافت نشد. در حال ایجاد فایل موقت..."
+    echo "package.json not found. Initializing temporary setup..."
     npm init -y
     npm install serve
 fi
 
-# ۶. راه‌اندازی پروژه با PM2
+# 6. Start Application with PM2
 echo ""
-echo "در حال راه‌اندازی برنامه روی پورت داخلی $APP_PORT..."
+echo "Starting application on port $APP_PORT..."
 pm2 delete ashpazkhoneh 2>/dev/null
 pm2 start serve --name "ashpazkhoneh" -- -s . -l $APP_PORT
 pm2 save
 pm2 startup
 
-# ۷. تنظیم Nginx به عنوان Reverse Proxy
+# 7. Configure Nginx Reverse Proxy
 echo ""
-echo "در حال تنظیم Nginx..."
+echo "Configuring Nginx..."
 
-# ایجاد فایل کانفیگ Nginx
+# Create Nginx Config
 cat > /etc/nginx/sites-available/$DOMAIN_NAME << EOL
 server {
     listen 80;
@@ -160,42 +160,47 @@ server {
 }
 EOL
 
-# فعال‌سازی سایت
-ln -s /etc/nginx/sites-available/$DOMAIN_NAME /etc/nginx/sites-enabled/
-# حذف تنظیمات پیش‌فرض (اختیاری)
-rm /etc/nginx/sites-enabled/default 2>/dev/null
+# Enable Site
+# Force link creation (-f) to overwrite if exists
+ln -sf /etc/nginx/sites-available/$DOMAIN_NAME /etc/nginx/sites-enabled/
 
-# بررسی و ریستارت Nginx
+# Cleanup default config and broken links
+echo "Cleaning up Nginx configuration..."
+rm /etc/nginx/sites-enabled/default 2>/dev/null
+# CRITICAL FIX: Remove broken symlinks that cause "No such file or directory" errors
+find -L /etc/nginx/sites-enabled/ -type l -delete
+
+# Test and Restart Nginx
 nginx -t
 if [ $? -eq 0 ]; then
     systemctl restart nginx
-    echo "Nginx با موفقیت تنظیم شد."
+    echo "Nginx configured successfully."
 else
-    echo -e "${RED}خطا در تنظیمات Nginx.${NC}"
+    echo -e "${RED}Nginx configuration failed.${NC}"
     exit 1
 fi
 
-# ۸. دریافت SSL و ریدایرکت HTTPS
+# 8. SSL & HTTPS
 echo ""
-echo "در حال دریافت گواهی SSL و تنظیم HTTPS..."
-echo -e "${BLUE}توجه: مطمئن شوید که دامنه شما ($DOMAIN_NAME) به IP این سرور متصل شده است.${NC}"
+echo "Obtaining SSL Certificate & Enabling HTTPS..."
+echo -e "${BLUE}Note: Ensure your domain ($DOMAIN_NAME) points to this server IP.${NC}"
 
 certbot --nginx --non-interactive --agree-tos --redirect -m $SSL_EMAIL -d $DOMAIN_NAME -d www.$DOMAIN_NAME
 
 if [ $? -eq 0 ]; then
     echo ""
     echo -e "${GREEN}=========================================${NC}"
-    echo -e "${GREEN}   نصب با موفقیت به پایان رسید!   ${NC}"
+    echo -e "${GREEN}   Installation Complete!   ${NC}"
     echo -e "${GREEN}=========================================${NC}"
-    echo -e "سایت شما هم‌اکنون به صورت ایمن (HTTPS) در دسترس است:"
+    echo -e "Your site is now secure and accessible at:"
     echo -e "https://$DOMAIN_NAME"
     echo ""
-    echo -e "تمام درخواست‌های HTTP به HTTPS هدایت می‌شوند."
+    echo -e "All HTTP traffic is redirected to HTTPS."
 else
     echo ""
-    echo -e "${RED}دریافت SSL با خطا مواجه شد.${NC}"
-    echo "لطفاً بررسی کنید که DNS دامنه به درستی به سرور متصل شده باشد."
-    echo "سایت شما موقتاً روی http://$DOMAIN_NAME در دسترس است."
+    echo -e "${RED}SSL Installation Failed.${NC}"
+    echo "Please check your DNS settings."
+    echo "Your site is temporarily available at http://$DOMAIN_NAME"
 fi
 ```
 
