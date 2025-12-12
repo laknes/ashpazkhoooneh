@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, ViewState } from '../types';
-import { Smartphone, ArrowLeft, Lock, User as UserIcon, Mail, MapPin, Building, Hash, AlertCircle } from 'lucide-react';
+import { Smartphone, ArrowLeft, Lock, User as UserIcon, Mail, MapPin, Building, Hash, AlertCircle, ShieldCheck, Key } from 'lucide-react';
 import { db } from '../services/db';
 import { PROVINCES, getCitiesForProvince, VALIDATION_REGEX } from '../constants';
 
@@ -11,10 +11,14 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
+  const [authMethod, setAuthMethod] = useState<'OTP' | 'PASSWORD'>('OTP');
   const [step, setStep] = useState<'IDENTIFIER' | 'OTP' | 'REGISTER'>('IDENTIFIER');
+  
+  // Login State
   const [identifier, setIdentifier] = useState(''); // Can be phone or email
   const [loginType, setLoginType] = useState<'PHONE' | 'EMAIL'>('PHONE');
   const [otp, setOtp] = useState('');
+  const [password, setPassword] = useState('');
   
   // Registration State
   const [regName, setRegName] = useState('');
@@ -63,6 +67,29 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
     } else {
       setErrors({ otp: 'کد تایید نامعتبر است' });
     }
+  };
+
+  const handlePasswordLogin = (e: React.FormEvent) => {
+      e.preventDefault();
+      setErrors({});
+      
+      const user = db.users.findByLogin(identifier);
+      if (user) {
+          if (user.password === password) {
+              onLogin(user);
+          } else {
+              setErrors({ password: 'رمز عبور اشتباه است' });
+          }
+      } else {
+          setErrors({ identifier: 'کاربری با این مشخصات یافت نشد' });
+      }
+  };
+
+  const handleAdminDemo = () => {
+    setAuthMethod('PASSWORD');
+    setStep('IDENTIFIER');
+    setIdentifier('09123456789');
+    setPassword('admin');
   };
 
   const validateRegistration = (): boolean => {
@@ -147,20 +174,43 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-8">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-lg border border-gray-100 animate-in fade-in zoom-in-95 duration-300">
+        
+        {/* Header & Tabs */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-black text-gray-800 mb-2">
-            {step === 'IDENTIFIER' ? 'ورود / ثبت‌نام' : step === 'OTP' ? 'تایید هویت' : 'تکمیل ثبت نام'}
+          <h2 className="text-2xl font-black text-gray-800 mb-6">
+            {step === 'REGISTER' ? 'تکمیل ثبت نام' : 'ورود به حساب کاربری'}
           </h2>
+          
+          {step !== 'REGISTER' && (
+              <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
+                  <button 
+                    onClick={() => { setAuthMethod('OTP'); setErrors({}); setStep('IDENTIFIER'); }}
+                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${authMethod === 'OTP' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                      رمز یکبار مصرف
+                  </button>
+                  <button 
+                    onClick={() => { setAuthMethod('PASSWORD'); setErrors({}); setStep('IDENTIFIER'); }}
+                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${authMethod === 'PASSWORD' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                      رمز عبور ثابت
+                  </button>
+              </div>
+          )}
+          
           <p className="text-gray-500 text-sm">
-            {step === 'IDENTIFIER' 
+            {step === 'IDENTIFIER' && authMethod === 'OTP'
               ? 'برای ورود یا ثبت‌نام، شماره موبایل یا ایمیل خود را وارد کنید.' 
+              : step === 'IDENTIFIER' && authMethod === 'PASSWORD'
+              ? 'لطفاً نام کاربری و رمز عبور خود را وارد کنید.'
               : step === 'OTP'
               ? `کد تایید به ${identifier} ارسال شد.`
               : 'برای تکمیل حساب کاربری خود، اطلاعات زیر را وارد کنید.'}
           </p>
         </div>
 
-        {step === 'IDENTIFIER' && (
+        {/* OTP Login Form */}
+        {authMethod === 'OTP' && step === 'IDENTIFIER' && (
           <form onSubmit={handleSendOtp} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">شماره موبایل یا ایمیل</label>
@@ -182,9 +232,80 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
             >
               ارسال کد تایید
             </button>
+            
+            <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-gray-200"></div>
+                <span className="flex-shrink-0 mx-4 text-gray-400 text-xs">دسترسی سریع</span>
+                <div className="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleAdminDemo}
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <ShieldCheck size={18} />
+              ورود آزمایشی مدیریت
+            </button>
           </form>
         )}
 
+        {/* Password Login Form */}
+        {authMethod === 'PASSWORD' && step === 'IDENTIFIER' && (
+            <form onSubmit={handlePasswordLogin} className="space-y-6">
+                 <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">شماره موبایل یا ایمیل</label>
+                    <div className="relative">
+                        <input
+                        type="text"
+                        placeholder="0912xxxxxxx"
+                        className={`w-full px-4 py-3 rounded-xl border ${errors.identifier ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 text-left dir-ltr`}
+                        value={identifier}
+                        onChange={(e) => setIdentifier(e.target.value)}
+                        />
+                        <UserIcon className="absolute left-3 top-3.5 text-gray-400" size={20} />
+                    </div>
+                    <ErrorMsg field="identifier" />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">رمز عبور</label>
+                    <div className="relative">
+                        <input
+                        type="password"
+                        placeholder="••••••••"
+                        className={`w-full px-4 py-3 rounded-xl border ${errors.password ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 dir-ltr`}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <Key className="absolute left-3 top-3.5 text-gray-400" size={20} />
+                    </div>
+                    <ErrorMsg field="password" />
+                </div>
+                <button
+                    type="submit"
+                    className="w-full bg-primary hover:bg-orange-600 text-white py-3 rounded-xl font-bold transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-1 active:scale-95"
+                >
+                    ورود
+                </button>
+
+                <div className="relative flex py-2 items-center">
+                    <div className="flex-grow border-t border-gray-200"></div>
+                    <span className="flex-shrink-0 mx-4 text-gray-400 text-xs">دسترسی سریع</span>
+                    <div className="flex-grow border-t border-gray-200"></div>
+                </div>
+
+                <button
+                type="button"
+                onClick={handleAdminDemo}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                <ShieldCheck size={18} />
+                ورود آزمایشی مدیریت
+                </button>
+            </form>
+        )}
+
+        {/* OTP Verification Step */}
         {step === 'OTP' && (
           <form onSubmit={handleVerifyOtp} className="space-y-6">
             <div>
@@ -201,6 +322,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
                 <Lock className="absolute left-3 top-3.5 text-gray-400" size={20} />
               </div>
               <ErrorMsg field="otp" />
+              <p className="text-xs text-center text-gray-400 mt-2 bg-gray-50 py-1 rounded">کد تایید آزمایشی: <b className="text-gray-700 tracking-widest">1234</b></p>
             </div>
             <button
               type="submit"
@@ -218,6 +340,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
           </form>
         )}
 
+        {/* Registration Form */}
         {step === 'REGISTER' && (
             <form onSubmit={handleRegister} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

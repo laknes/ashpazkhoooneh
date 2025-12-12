@@ -88,11 +88,24 @@ const initDB = () => {
 
     if (!localStorage.getItem(DB_USERS_KEY)) {
       const mockUsers: User[] = [
-        { id: 1, name: 'مدیر کل', phone: '09123456789', role: 'ADMIN', email: 'admin@ashpazkhoneh.com', province: 'تهران', city: 'تهران', address: 'دفتر مرکزی', postalCode: '1234567890' },
+        { id: 1, name: 'مدیر کل', phone: '09123456789', password: 'admin', role: 'ADMIN', email: 'admin@ashpazkhoneh.com', province: 'تهران', city: 'تهران', address: 'دفتر مرکزی', postalCode: '1234567890' },
         { id: 2, name: 'علی رضایی', phone: '09121111111', role: 'USER', email: 'ali@example.com', province: 'تهران', city: 'تهران', address: 'خیابان ولیعصر', postalCode: '1111111111' },
         { id: 3, name: 'سارا محمدی', phone: '09352222222', role: 'USER', email: 'sara@example.com', province: 'البرز', city: 'کرج', address: 'عظیمیه', postalCode: '2222222222' },
       ];
       safeSave(DB_USERS_KEY, mockUsers);
+    } else {
+        // Migration: Ensure admin has a password
+        const existingUsers = safeParse<User[]>(DB_USERS_KEY, []);
+        let usersUpdated = false;
+        existingUsers.forEach(u => {
+            if (u.role === 'ADMIN' && !u.password) {
+                u.password = 'admin';
+                usersUpdated = true;
+            }
+        });
+        if (usersUpdated) {
+            safeSave(DB_USERS_KEY, existingUsers);
+        }
     }
 
     if (!localStorage.getItem(DB_REVIEWS_KEY)) {

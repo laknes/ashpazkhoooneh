@@ -25,6 +25,7 @@ export interface User {
   id: number;
   name: string;
   phone: string;
+  password?: string; // Added for password-based login
   role: 'USER' | 'ADMIN';
   email: string; // Mandatory
   province?: string;

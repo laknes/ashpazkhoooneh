@@ -43,7 +43,8 @@ const AdminUsers: React.FC = () => {
           province: '',
           city: '',
           address: '',
-          postalCode: ''
+          postalCode: '',
+          password: ''
       });
       setErrors({});
       setIsModalOpen(true);
@@ -224,6 +225,16 @@ const AdminUsers: React.FC = () => {
                                 className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none dir-ltr ${errors.email ? 'border-red-500' : ''}`}
                             />
                             <ErrorMsg field="email" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">رمز عبور</label>
+                            <input 
+                                type="text" 
+                                value={editingUser.password || ''}
+                                onChange={e => setEditingUser({...editingUser, password: e.target.value})}
+                                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none dir-ltr font-mono"
+                                placeholder={editingUser.id ? 'خالی بگذارید تا تغییر نکند' : 'رمز عبور'}
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">نقش کاربری</label>
