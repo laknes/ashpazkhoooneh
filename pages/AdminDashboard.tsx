@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../services/db';
 import { formatPrice } from '../constants';
-import { DollarSign, ShoppingBag, Package, Users, TrendingUp } from 'lucide-react';
+import { DollarSign, ShoppingBag, Package, Users, TrendingUp, Settings } from 'lucide-react';
 import { ViewState } from '../types';
 
 interface AdminDashboardProps {
@@ -69,7 +69,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onChangeView }) => {
         {/* Quick Actions */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
              <h3 className="font-bold text-lg mb-4">دسترسی سریع</h3>
-             <div className="grid grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <button 
                     onClick={() => onChangeView?.('ADMIN_PRODUCTS')}
                     className="p-4 border border-dashed border-gray-300 rounded-lg text-gray-500 hover:text-primary hover:border-primary hover:bg-orange-50 transition-all duration-200 hover:scale-105 active:scale-95 flex flex-col items-center justify-center"
@@ -83,6 +83,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onChangeView }) => {
                 >
                     <Users className="mb-2" />
                     مدیریت کاربران
+                </button>
+                <button 
+                    onClick={() => onChangeView?.('ADMIN_SETTINGS')}
+                    className="p-4 border border-dashed border-gray-300 rounded-lg text-gray-500 hover:text-primary hover:border-primary hover:bg-orange-50 transition-all duration-200 hover:scale-105 active:scale-95 flex flex-col items-center justify-center"
+                >
+                    <Settings className="mb-2" />
+                    تنظیمات سایت
                 </button>
              </div>
         </div>

@@ -3,16 +3,17 @@ import React, { useState } from 'react';
 import { User, Order } from '../types';
 import { db } from '../services/db';
 import { formatPrice, PROVINCES, getCitiesForProvince, VALIDATION_REGEX } from '../constants';
-import { User as UserIcon, LogOut, Package, MapPin, Mail, Smartphone, Edit2, Save, FileText, X, AlertCircle, LayoutDashboard, Key } from 'lucide-react';
+import { User as UserIcon, LogOut, Package, MapPin, Mail, Smartphone, Edit2, Save, FileText, X, AlertCircle, LayoutDashboard, Key, Settings } from 'lucide-react';
 
 interface UserProfileProps {
   user: User;
   onLogout: () => void;
   onUpdateUser?: (user: User) => void;
   onEnterAdmin?: () => void;
+  onEnterSettings?: () => void;
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout, onUpdateUser, onEnterAdmin }) => {
+const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout, onUpdateUser, onEnterAdmin, onEnterSettings }) => {
   const [activeTab, setActiveTab] = useState<'ORDERS' | 'PROFILE'>('ORDERS');
   const [isEditing, setIsEditing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null); // For Invoice Modal
@@ -215,6 +216,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout, onUpdateUser,
                   >
                     <span>ورود به پنل مدیریت</span>
                     <LayoutDashboard size={18} />
+                  </button>
+              )}
+              
+              {user.role === 'ADMIN' && onEnterSettings && (
+                  <button 
+                    onClick={onEnterSettings}
+                    className="px-6 py-4 text-right bg-gray-800 text-white hover:bg-gray-700 flex items-center justify-between transition-colors mb-1"
+                  >
+                    <span>تنظیمات سایت</span>
+                    <Settings size={18} />
                   </button>
               )}
 

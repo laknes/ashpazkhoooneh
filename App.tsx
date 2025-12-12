@@ -213,6 +213,7 @@ const App: React.FC = () => {
             onLogout={handleLogout} 
             onUpdateUser={handleUserUpdate} 
             onEnterAdmin={() => handleNavigate('ADMIN_DASHBOARD')}
+            onEnterSettings={() => handleNavigate('ADMIN_SETTINGS')}
           />
         ) : <Login onLogin={handleLogin} onCancel={() => handleNavigate('HOME')} />;
       case 'BLOG':
