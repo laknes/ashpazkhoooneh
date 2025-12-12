@@ -96,6 +96,7 @@ export interface SeoConfig {
 
 export interface SslConfig {
   enabled: boolean;
+  provider: 'manual' | 'cloudflare'; // Added cloudflare option
   certCrt: string;
   privateKey: string;
   chain?: string;

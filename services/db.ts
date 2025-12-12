@@ -302,6 +302,7 @@ const initDB = () => {
         seo: defaultSeo,
         ssl: {
           enabled: false,
+          provider: 'manual', // Default provider
           certCrt: '',
           privateKey: ''
         },
@@ -362,7 +363,11 @@ const initDB = () => {
       }
 
       if (!parsed.ssl) {
-          parsed.ssl = { enabled: false, certCrt: '', privateKey: '' };
+          parsed.ssl = { enabled: false, provider: 'manual', certCrt: '', privateKey: '' };
+          updated = true;
+      } else if (!parsed.ssl.provider) {
+          // Migration for existing SSL settings
+          parsed.ssl.provider = 'manual';
           updated = true;
       }
 
@@ -590,7 +595,7 @@ export const db = {
               };
           }
           if (!settings.ssl) {
-              settings.ssl = { enabled: false, certCrt: '', privateKey: '' };
+              settings.ssl = { enabled: false, provider: 'manual', certCrt: '', privateKey: '' };
           }
           
           return settings;
@@ -610,7 +615,7 @@ export const db = {
             defaultKeywords: '',
             siteUrl: ''
         },
-        ssl: { enabled: false, certCrt: '', privateKey: '' },
+        ssl: { enabled: false, provider: 'manual', certCrt: '', privateKey: '' },
         aboutText: ''
       };
     },

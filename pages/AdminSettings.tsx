@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../services/db';
 import { SiteSettings, HeroSlide } from '../types';
-import { Save, Plus, Trash2, AlertCircle, Instagram, Twitter, Linkedin, Send, Image as ImageIcon, MessageSquare, CreditCard, Truck, ExternalLink, Search, Lock, Upload } from 'lucide-react';
+import { Save, Plus, Trash2, AlertCircle, Instagram, Twitter, Linkedin, Send, Image as ImageIcon, MessageSquare, CreditCard, Truck, ExternalLink, Search, Lock, Upload, CloudLightning } from 'lucide-react';
 import ImageUploader from '../components/ImageUploader';
 
 const AdminSettings: React.FC = () => {
@@ -438,7 +438,7 @@ const AdminSettings: React.FC = () => {
                     </div>
                 </div>
 
-                {/* SSL Settings (New) */}
+                {/* SSL Settings (Updated for Cloudflare) */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h2 className="text-xl font-bold mb-4 border-b pb-2 flex items-center justify-between">
                         <div className="flex items-center">
@@ -452,26 +452,64 @@ const AdminSettings: React.FC = () => {
                             این تنظیمات در دیتابیس ذخیره می‌شوند اما برای اعمال روی سرور نیاز به تنظیمات وب‌سرور (Nginx) دارند. لطفاً پس از ذخیره، با پشتیبانی فنی تماس بگیرید یا اسکریپت آپدیت را اجرا کنید.
                         </div>
 
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-4">
                             <input 
                                 type="checkbox" 
                                 id="sslEnabled"
                                 checked={settings.ssl?.enabled || false}
-                                onChange={e => setSettings({...settings, ssl: {...(settings.ssl || {certCrt: '', privateKey: ''}), enabled: e.target.checked}})}
+                                onChange={e => setSettings({...settings, ssl: {...(settings.ssl || {certCrt: '', privateKey: '', provider: 'manual'}), enabled: e.target.checked}})}
                                 className="w-4 h-4 text-teal-600 focus:ring-teal-500 rounded"
                             />
                             <label htmlFor="sslEnabled" className="text-sm text-gray-700 select-none font-bold">فعال‌سازی HTTPS</label>
                         </div>
 
+                        {/* Provider Selector */}
+                        <div className="flex gap-2 mb-4 bg-gray-50 p-1 rounded-lg">
+                            <button
+                                type="button"
+                                onClick={() => setSettings({...settings, ssl: {...(settings.ssl || {enabled: false, certCrt: '', privateKey: ''}), provider: 'manual'}})}
+                                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${!settings.ssl?.provider || settings.ssl.provider === 'manual' ? 'bg-white shadow text-gray-800' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                آپلود دستی گواهی
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setSettings({...settings, ssl: {...(settings.ssl || {enabled: false, certCrt: '', privateKey: ''}), provider: 'cloudflare'}})}
+                                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all flex items-center justify-center gap-2 ${settings.ssl?.provider === 'cloudflare' ? 'bg-[#F38020] shadow text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <CloudLightning size={16} />
+                                کلودفلر (Cloudflare)
+                            </button>
+                        </div>
+
+                        {settings.ssl?.provider === 'cloudflare' ? (
+                            <div className="bg-orange-50 border border-orange-100 rounded-lg p-4 mb-4 text-sm text-gray-700">
+                                <h4 className="font-bold text-[#F38020] mb-2 flex items-center"><CloudLightning size={16} className="ml-1"/> راهنمای اتصال کلودفلر</h4>
+                                <ol className="list-decimal list-inside space-y-1 text-xs">
+                                    <li>در پنل Cloudflare دامنه خود را ثبت کنید.</li>
+                                    <li>به بخش <b>SSL/TLS > Origin Server</b> بروید.</li>
+                                    <li>روی <b>Create Certificate</b> کلیک کنید.</li>
+                                    <li>محتوای "Origin Certificate" و "Private Key" تولید شده را در کادرهای زیر کپی کنید.</li>
+                                    <li>حالت SSL را در کلودفلر روی <b>Full (Strict)</b> قرار دهید.</li>
+                                </ol>
+                            </div>
+                        ) : (
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 text-xs text-gray-500">
+                                فایل‌های گواهی (CRT/PEM) و کلید خصوصی (KEY) را که از شرکت هاستینگ یا صادرکننده SSL دریافت کرده‌اید، در اینجا آپلود کنید.
+                            </div>
+                        )}
+
                         <div>
                             <div className="flex justify-between items-center mb-1">
-                                <label className="block text-sm font-medium text-gray-700">گواهی‌نامه (Certificate CRT)</label>
+                                <label className="block text-sm font-medium text-gray-700">
+                                    {settings.ssl?.provider === 'cloudflare' ? 'Origin Certificate' : 'گواهی‌نامه (Certificate CRT)'}
+                                </label>
                                 <button 
                                     type="button"
                                     onClick={() => certInputRef.current?.click()}
                                     className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center"
                                 >
-                                    <Upload size={12} className="ml-1" /> آپلود فایل .crt/.pem
+                                    <Upload size={12} className="ml-1" /> آپلود فایل
                                 </button>
                                 <input 
                                     type="file" 
@@ -484,20 +522,22 @@ const AdminSettings: React.FC = () => {
                             <textarea
                                 rows={3}
                                 value={settings.ssl?.certCrt || ''}
-                                onChange={e => setSettings({...settings, ssl: {...(settings.ssl || {enabled: false, privateKey: ''}), certCrt: e.target.value}})}
+                                onChange={e => setSettings({...settings, ssl: {...(settings.ssl || {enabled: false, privateKey: '', provider: 'manual'}), certCrt: e.target.value}})}
                                 className="w-full border rounded-lg p-2 dir-ltr font-mono text-xs bg-gray-50"
                                 placeholder="-----BEGIN CERTIFICATE----- ..."
                             />
                         </div>
                         <div>
                             <div className="flex justify-between items-center mb-1">
-                                <label className="block text-sm font-medium text-gray-700">کلید خصوصی (Private Key)</label>
+                                <label className="block text-sm font-medium text-gray-700">
+                                     {settings.ssl?.provider === 'cloudflare' ? 'Private Key' : 'کلید خصوصی (Private Key)'}
+                                </label>
                                 <button 
                                     type="button"
                                     onClick={() => keyInputRef.current?.click()}
                                     className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center"
                                 >
-                                    <Upload size={12} className="ml-1" /> آپلود فایل .key
+                                    <Upload size={12} className="ml-1" /> آپلود فایل
                                 </button>
                                 <input 
                                     type="file" 
@@ -510,7 +550,7 @@ const AdminSettings: React.FC = () => {
                             <textarea
                                 rows={3}
                                 value={settings.ssl?.privateKey || ''}
-                                onChange={e => setSettings({...settings, ssl: {...(settings.ssl || {enabled: false, certCrt: ''}), privateKey: e.target.value}})}
+                                onChange={e => setSettings({...settings, ssl: {...(settings.ssl || {enabled: false, certCrt: '', provider: 'manual'}), privateKey: e.target.value}})}
                                 className="w-full border rounded-lg p-2 dir-ltr font-mono text-xs bg-gray-50"
                                 placeholder="-----BEGIN PRIVATE KEY----- ..."
                             />
