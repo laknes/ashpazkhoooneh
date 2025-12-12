@@ -70,7 +70,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     <>
       {/* Main Card Container */}
       <div 
-        className="group relative flex flex-col h-full bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
+        className="group relative flex flex-col h-full bg-white rounded-xl shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer overflow-hidden isolate"
         onClick={handleCardClick}
       >
         {/* Image Section */}
@@ -121,7 +121,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
         
         {/* Content Section */}
-        <div className="flex flex-col flex-grow p-4">
+        <div className="flex flex-col flex-grow p-4 relative z-10 bg-white">
           {/* Category & Rating */}
           <div className="flex justify-between items-start mb-2">
             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
@@ -154,7 +154,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <div className="flex items-center gap-2 relative">
               <button 
                 onClick={handleAddToCart}
-                className="bg-[#FF6A00] hover:bg-orange-600 text-white p-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center relative overflow-hidden"
+                className="bg-[#FF6A00] hover:bg-orange-600 text-white p-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center relative overflow-hidden z-20"
                 aria-label="افزودن به سبد خرید"
               >
                 <ShoppingCart size={18} />
@@ -166,7 +166,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               </button>
               {/* Flying Particle */}
               {isAdding && (
-                  <div className="absolute right-0 bottom-full mb-2 pointer-events-none animate-bounce text-[#FF6A00] opacity-0 transition-opacity duration-1000" style={{ animation: 'ping 0.8s cubic-bezier(0, 0, 0.2, 1) infinite, slideUp 0.8s ease-out' }}>
+                  <div className="absolute right-0 bottom-full mb-2 pointer-events-none animate-bounce text-[#FF6A00] opacity-0 transition-opacity duration-1000 z-30" style={{ animation: 'ping 0.8s cubic-bezier(0, 0, 0.2, 1) infinite, slideUp 0.8s ease-out' }}>
                        <ShoppingCart size={20} className="fill-current"/>
                   </div>
               )}
