@@ -94,6 +94,13 @@ export interface SeoConfig {
   siteUrl: string; // For canonical links
 }
 
+export interface SslConfig {
+  enabled: boolean;
+  certCrt: string;
+  privateKey: string;
+  chain?: string;
+}
+
 export interface SiteSettings {
   heroSlides: HeroSlide[];
   contact: {
@@ -112,6 +119,7 @@ export interface SiteSettings {
   payment: PaymentConfig;
   shipping: ShippingConfig;
   seo: SeoConfig;
+  ssl: SslConfig;
   aboutText: string;
 }
 

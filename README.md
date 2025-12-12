@@ -41,6 +41,62 @@ npm run dev
 
 ---
 
+## 🔄 راهنمای بروزرسانی (Update Script)
+
+برای بروزرسانی نسخه برنامه روی سرور بدون از دست رفتن اطلاعات و بدون تغییر تنظیمات سرور، از فایل `update.bash` استفاده کنید.
+
+۱. اگر این فایل موجود نیست، آن را ایجاد کنید:
+```bash
+nano update.bash
+```
+
+۲. کدهای زیر را در آن قرار دهید:
+
+```bash
+#!/bin/bash
+
+# Color definitions
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}>>> Starting Update Process...${NC}"
+
+# 1. Pull latest code (Uncomment if using Git on server)
+# echo -e "${GREEN}1. Pulling latest changes...${NC}"
+# git pull
+
+# 2. Install Dependencies (in case package.json changed)
+echo -e "${GREEN}2. Installing dependencies...${NC}"
+npm install
+
+# 3. Build Project (Generate dist folder)
+echo -e "${GREEN}3. Building application...${NC}"
+npm run build
+
+# 4. Restart Application via PM2
+echo -e "${GREEN}4. Restarting PM2 process...${NC}"
+if pm2 list | grep -q "ashpazkhoneh"; then
+    pm2 reload ashpazkhoneh
+else
+    pm2 start serve --name "ashpazkhoneh" -- -s dist -l tcp://127.0.0.1:3000
+fi
+
+echo -e "${BLUE}>>> Update Complete Successfully!${NC}"
+```
+
+۳. به فایل دسترسی اجرا بدهید:
+```bash
+chmod +x update.bash
+```
+
+۴. برای آپدیت سایت کافیست دستور زیر را اجرا کنید:
+```bash
+./update.bash
+```
+
+---
+
 ## 🌐 راهنمای استقرار روی سرور (نصب اتوماتیک با SSL)
 
 برای راه‌اندازی سریع پروژه روی سرور (VPS)، اسکریپت زیر تمام مراحل نصب، کانفیگ دیتابیس، تنظیم دامنه، دریافت SSL و راه‌اندازی را به صورت خودکار انجام می‌دهد.

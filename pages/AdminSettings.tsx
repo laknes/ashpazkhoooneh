@@ -1,13 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../services/db';
 import { SiteSettings, HeroSlide } from '../types';
-import { Save, Plus, Trash2, AlertCircle, Instagram, Twitter, Linkedin, Send, Image as ImageIcon, MessageSquare, CreditCard, Truck, ExternalLink, Search } from 'lucide-react';
+import { Save, Plus, Trash2, AlertCircle, Instagram, Twitter, Linkedin, Send, Image as ImageIcon, MessageSquare, CreditCard, Truck, ExternalLink, Search, Lock, Upload } from 'lucide-react';
 import ImageUploader from '../components/ImageUploader';
 
 const AdminSettings: React.FC = () => {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [activeTab, setActiveTab] = useState<'GENERAL' | 'SEO' | 'API'>('GENERAL');
+  
+  // File inputs for SSL
+  const certInputRef = useRef<HTMLInputElement>(null);
+  const keyInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setSettings(db.settings.get());
@@ -59,6 +63,25 @@ const AdminSettings: React.FC = () => {
       }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'certCrt' | 'privateKey') => {
+      const file = e.target.files?.[0];
+      if (file && settings) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+              if (event.target?.result) {
+                  const content = event.target.result as string;
+                  setSettings({
+                      ...settings,
+                      ssl: { ...settings.ssl, enabled: settings.ssl?.enabled || false, [field]: content }
+                  });
+              }
+          };
+          reader.readAsText(file);
+      }
+      // Reset input
+      if (e.target) e.target.value = '';
+  };
+
   if (!settings) return <div>در حال بارگذاری...</div>;
 
   return (
@@ -83,7 +106,7 @@ const AdminSettings: React.FC = () => {
             onClick={() => setActiveTab('API')}
             className={`pb-3 px-2 font-medium transition-colors ${activeTab === 'API' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-800'}`}
           >
-              تنظیمات فنی (API)
+              تنظیمات فنی (API & SSL)
           </button>
       </div>
       
@@ -410,6 +433,86 @@ const AdminSettings: React.FC = () => {
                                 onChange={e => setSettings({...settings, sms: {...settings.sms, lineNumber: e.target.value}})}
                                 className="w-full border rounded-lg p-2 dir-ltr font-mono"
                                 placeholder="e.g. 1000..."
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* SSL Settings (New) */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h2 className="text-xl font-bold mb-4 border-b pb-2 flex items-center justify-between">
+                        <div className="flex items-center">
+                            <Lock size={20} className="ml-2 text-teal-600" />
+                            تنظیمات SSL/HTTPS
+                        </div>
+                    </h2>
+                    <div className="space-y-4">
+                        <div className="bg-yellow-50 text-yellow-800 text-xs p-3 rounded-lg border border-yellow-200 mb-4">
+                            <strong className="block mb-1">توجه مهم:</strong>
+                            این تنظیمات در دیتابیس ذخیره می‌شوند اما برای اعمال روی سرور نیاز به تنظیمات وب‌سرور (Nginx) دارند. لطفاً پس از ذخیره، با پشتیبانی فنی تماس بگیرید یا اسکریپت آپدیت را اجرا کنید.
+                        </div>
+
+                        <div className="flex items-center gap-2 mb-2">
+                            <input 
+                                type="checkbox" 
+                                id="sslEnabled"
+                                checked={settings.ssl?.enabled || false}
+                                onChange={e => setSettings({...settings, ssl: {...(settings.ssl || {certCrt: '', privateKey: ''}), enabled: e.target.checked}})}
+                                className="w-4 h-4 text-teal-600 focus:ring-teal-500 rounded"
+                            />
+                            <label htmlFor="sslEnabled" className="text-sm text-gray-700 select-none font-bold">فعال‌سازی HTTPS</label>
+                        </div>
+
+                        <div>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-sm font-medium text-gray-700">گواهی‌نامه (Certificate CRT)</label>
+                                <button 
+                                    type="button"
+                                    onClick={() => certInputRef.current?.click()}
+                                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center"
+                                >
+                                    <Upload size={12} className="ml-1" /> آپلود فایل .crt/.pem
+                                </button>
+                                <input 
+                                    type="file" 
+                                    ref={certInputRef} 
+                                    className="hidden" 
+                                    accept=".crt,.pem,.cer"
+                                    onChange={(e) => handleFileUpload(e, 'certCrt')}
+                                />
+                            </div>
+                            <textarea
+                                rows={3}
+                                value={settings.ssl?.certCrt || ''}
+                                onChange={e => setSettings({...settings, ssl: {...(settings.ssl || {enabled: false, privateKey: ''}), certCrt: e.target.value}})}
+                                className="w-full border rounded-lg p-2 dir-ltr font-mono text-xs bg-gray-50"
+                                placeholder="-----BEGIN CERTIFICATE----- ..."
+                            />
+                        </div>
+                        <div>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-sm font-medium text-gray-700">کلید خصوصی (Private Key)</label>
+                                <button 
+                                    type="button"
+                                    onClick={() => keyInputRef.current?.click()}
+                                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center"
+                                >
+                                    <Upload size={12} className="ml-1" /> آپلود فایل .key
+                                </button>
+                                <input 
+                                    type="file" 
+                                    ref={keyInputRef} 
+                                    className="hidden" 
+                                    accept=".key,.pem"
+                                    onChange={(e) => handleFileUpload(e, 'privateKey')}
+                                />
+                            </div>
+                            <textarea
+                                rows={3}
+                                value={settings.ssl?.privateKey || ''}
+                                onChange={e => setSettings({...settings, ssl: {...(settings.ssl || {enabled: false, certCrt: ''}), privateKey: e.target.value}})}
+                                className="w-full border rounded-lg p-2 dir-ltr font-mono text-xs bg-gray-50"
+                                placeholder="-----BEGIN PRIVATE KEY----- ..."
                             />
                         </div>
                     </div>

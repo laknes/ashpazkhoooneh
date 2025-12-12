@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../services/db';
 import { User } from '../types';
 import { Trash2, Shield, ShieldOff, User as UserIcon, Edit, Plus, X, AlertCircle } from 'lucide-react';
@@ -103,6 +104,172 @@ const AdminUsers: React.FC = () => {
     );
   };
 
+  // Render Modal via Portal to avoid Z-Index/Overflow issues
+  const renderModal = () => {
+    if (!isModalOpen) return null;
+
+    return createPortal(
+        <div 
+            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+            onClick={() => setIsModalOpen(false)}
+        >
+            <div 
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Header - Fixed */}
+                <div className="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl flex-shrink-0">
+                    <h2 className="text-xl font-bold text-gray-800 flex items-center">
+                        <UserIcon className="ml-2 text-primary" />
+                        {editingUser.id ? 'ویرایش اطلاعات کاربر' : 'افزودن کاربر جدید'}
+                    </h2>
+                    <button 
+                        onClick={() => setIsModalOpen(false)} 
+                        className="text-gray-400 hover:text-red-500 transition-colors p-1 hover:bg-red-50 rounded-full"
+                    >
+                        <X size={24} />
+                    </button>
+                </div>
+
+                {/* Form - Scrollable */}
+                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                    <form id="userForm" onSubmit={handleSubmit} className="space-y-6">
+                        {/* Personal Info */}
+                        <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                            <h3 className="text-sm font-bold text-blue-800 mb-4 border-b border-blue-200 pb-2">اطلاعات هویتی و دسترسی</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">نام و نام خانوادگی <span className="text-red-500">*</span></label>
+                                    <input 
+                                        type="text" 
+                                        value={editingUser.name}
+                                        onChange={e => setEditingUser({...editingUser, name: e.target.value})}
+                                        className={`w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:outline-none transition-shadow ${errors.name ? 'border-red-500' : ''}`}
+                                    />
+                                    <ErrorMsg field="name" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">نقش کاربری</label>
+                                    <select 
+                                        value={editingUser.role}
+                                        onChange={e => setEditingUser({...editingUser, role: e.target.value as 'ADMIN' | 'USER'})}
+                                        className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:outline-none bg-white"
+                                    >
+                                        <option value="USER">کاربر عادی</option>
+                                        <option value="ADMIN">مدیر کل</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">شماره موبایل <span className="text-red-500">*</span></label>
+                                    <input 
+                                        type="text" 
+                                        value={editingUser.phone}
+                                        onChange={e => setEditingUser({...editingUser, phone: e.target.value})}
+                                        className={`w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:outline-none dir-ltr font-mono ${errors.phone ? 'border-red-500' : ''}`}
+                                        placeholder="0912..."
+                                        disabled={!!editingUser.id}
+                                    />
+                                    <ErrorMsg field="phone" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">رمز عبور</label>
+                                    <input 
+                                        type="text" 
+                                        value={editingUser.password || ''}
+                                        onChange={e => setEditingUser({...editingUser, password: e.target.value})}
+                                        className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:outline-none dir-ltr font-mono"
+                                        placeholder={editingUser.id ? '•••••• (تغییر نمی‌کند)' : 'رمز عبور'}
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">ایمیل <span className="text-red-500">*</span></label>
+                                    <input 
+                                        type="email" 
+                                        value={editingUser.email}
+                                        onChange={e => setEditingUser({...editingUser, email: e.target.value})}
+                                        className={`w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:outline-none dir-ltr ${errors.email ? 'border-red-500' : ''}`}
+                                    />
+                                    <ErrorMsg field="email" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Address Info */}
+                        <div className="bg-orange-50/50 p-4 rounded-xl border border-orange-100">
+                             <h3 className="text-sm font-bold text-orange-800 mb-4 border-b border-orange-200 pb-2">اطلاعات سکونت</h3>
+                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">استان</label>
+                                    <select 
+                                        value={editingUser.province}
+                                        onChange={e => setEditingUser({...editingUser, province: e.target.value, city: ''})}
+                                        className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:outline-none bg-white"
+                                    >
+                                        <option value="">انتخاب استان...</option>
+                                        {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">شهر</label>
+                                    <select 
+                                        value={editingUser.city}
+                                        onChange={e => setEditingUser({...editingUser, city: e.target.value})}
+                                        className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:outline-none bg-white"
+                                        disabled={!editingUser.province}
+                                    >
+                                        <option value="">انتخاب شهر...</option>
+                                        {getCitiesForProvince(editingUser.province || '').map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">کد پستی <span className="text-red-500">*</span></label>
+                                    <input 
+                                        type="text" 
+                                        value={editingUser.postalCode}
+                                        onChange={e => setEditingUser({...editingUser, postalCode: e.target.value})}
+                                        className={`w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:outline-none dir-ltr font-mono ${errors.postalCode ? 'border-red-500' : ''}`}
+                                        maxLength={10}
+                                    />
+                                    <ErrorMsg field="postalCode" />
+                                </div>
+                                <div className="md:col-span-3">
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">آدرس دقیق پستی</label>
+                                    <textarea 
+                                        rows={2}
+                                        value={editingUser.address}
+                                        onChange={e => setEditingUser({...editingUser, address: e.target.value})}
+                                        className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:outline-none"
+                                        placeholder="خیابان، کوچه، پلاک..."
+                                    ></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                {/* Footer Buttons - Fixed at bottom */}
+                <div className="p-4 border-t flex justify-end gap-3 bg-white rounded-b-2xl flex-shrink-0">
+                    <button 
+                        type="button" 
+                        onClick={() => setIsModalOpen(false)}
+                        className="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition active:scale-95 font-medium"
+                    >
+                        انصراف
+                    </button>
+                    <button 
+                        type="submit"
+                        form="userForm"
+                        className="px-8 py-2.5 bg-primary text-white rounded-xl hover:bg-orange-600 shadow-lg shadow-orange-500/30 transition active:scale-95 font-bold"
+                    >
+                        {editingUser.id ? 'ذخیره تغییرات' : 'افزودن کاربر'}
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -183,135 +350,7 @@ const AdminUsers: React.FC = () => {
         </div>
       </div>
 
-      {/* Add/Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
-                <div className="p-6 border-b flex justify-between items-center">
-                    <h2 className="text-xl font-bold">{editingUser.id ? 'ویرایش کاربر' : 'افزودن کاربر جدید'}</h2>
-                    <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-transform hover:scale-110"><X size={24} /></button>
-                </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">نام و نام خانوادگی <span className="text-red-500">*</span></label>
-                            <input 
-                                type="text" 
-                                value={editingUser.name}
-                                onChange={e => setEditingUser({...editingUser, name: e.target.value})}
-                                className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none ${errors.name ? 'border-red-500' : ''}`}
-                            />
-                            <ErrorMsg field="name" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">شماره موبایل <span className="text-red-500">*</span></label>
-                            <input 
-                                type="text" 
-                                value={editingUser.phone}
-                                onChange={e => setEditingUser({...editingUser, phone: e.target.value})}
-                                className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none dir-ltr font-mono ${errors.phone ? 'border-red-500' : ''}`}
-                                placeholder="0912..."
-                                disabled={!!editingUser.id} // Cannot change phone after creation
-                            />
-                            <ErrorMsg field="phone" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">ایمیل <span className="text-red-500">*</span></label>
-                            <input 
-                                type="email" 
-                                value={editingUser.email}
-                                onChange={e => setEditingUser({...editingUser, email: e.target.value})}
-                                className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none dir-ltr ${errors.email ? 'border-red-500' : ''}`}
-                            />
-                            <ErrorMsg field="email" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">رمز عبور</label>
-                            <input 
-                                type="text" 
-                                value={editingUser.password || ''}
-                                onChange={e => setEditingUser({...editingUser, password: e.target.value})}
-                                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none dir-ltr font-mono"
-                                placeholder={editingUser.id ? 'خالی بگذارید تا تغییر نکند' : 'رمز عبور'}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">نقش کاربری</label>
-                            <select 
-                                value={editingUser.role}
-                                onChange={e => setEditingUser({...editingUser, role: e.target.value as 'ADMIN' | 'USER'})}
-                                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none bg-white"
-                            >
-                                <option value="USER">کاربر عادی</option>
-                                <option value="ADMIN">مدیر کل</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">استان</label>
-                            <select 
-                                value={editingUser.province}
-                                onChange={e => setEditingUser({...editingUser, province: e.target.value, city: ''})}
-                                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none bg-white"
-                            >
-                                <option value="">انتخاب استان...</option>
-                                {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">شهر</label>
-                            <select 
-                                value={editingUser.city}
-                                onChange={e => setEditingUser({...editingUser, city: e.target.value})}
-                                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none bg-white"
-                                disabled={!editingUser.province}
-                            >
-                                <option value="">انتخاب شهر...</option>
-                                {getCitiesForProvince(editingUser.province || '').map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">کد پستی <span className="text-red-500">*</span></label>
-                            <input 
-                                type="text" 
-                                value={editingUser.postalCode}
-                                onChange={e => setEditingUser({...editingUser, postalCode: e.target.value})}
-                                className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none dir-ltr font-mono ${errors.postalCode ? 'border-red-500' : ''}`}
-                                maxLength={10}
-                            />
-                            <ErrorMsg field="postalCode" />
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">آدرس کامل</label>
-                        <textarea 
-                            rows={3}
-                            value={editingUser.address}
-                            onChange={e => setEditingUser({...editingUser, address: e.target.value})}
-                            className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-                        ></textarea>
-                    </div>
-
-                    <div className="pt-4 border-t flex justify-end gap-3">
-                        <button 
-                            type="button" 
-                            onClick={() => setIsModalOpen(false)}
-                            className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50 transition active:scale-95"
-                        >
-                            انصراف
-                        </button>
-                        <button 
-                            type="submit" 
-                            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-orange-600 shadow-md transition active:scale-95 font-bold"
-                        >
-                            {editingUser.id ? 'ذخیره تغییرات' : 'افزودن کاربر'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-      )}
+      {renderModal()}
     </div>
   );
 };

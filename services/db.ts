@@ -239,7 +239,7 @@ const initDB = () => {
           id: 1,
           image: HERO_IMAGE,
           title: 'آشپزخانه‌ای مدرن و حرفه‌ای',
-          subtitle: 'بهترین لوازم آشپزخانه از برترین برندهای جهان را با ضمانت اصالت و ارسال سریع تجربه کنید.'
+          subtitle: 'بهترین لوازم آشپزخانه از برترین برندهای جهانی را با ضمانت اصالت و ارسال سریع تجربه کنید.'
         },
         {
           id: 2,
@@ -300,6 +300,11 @@ const initDB = () => {
           apiToken: ''
         },
         seo: defaultSeo,
+        ssl: {
+          enabled: false,
+          certCrt: '',
+          privateKey: ''
+        },
         aboutText: `فروشگاه اینترنتی آشپزخونه با هدف ارائه بهترین و باکیفیت‌ترین لوازم خانه و آشپزخانه فعالیت خود را آغاز کرده است. ما بر این باوریم که قلب هر خانه، آشپزخانه آن است و شایستگی استفاده از بهترین ابزارها را دارد.
 
 ما مجموعه‌ای از برترین برندهای جهانی و داخلی را گرد هم آورده‌ایم تا شما بتوانید با اطمینان خاطر از اصالت کالا، خریدی لذت‌بخش را تجربه کنید. تیم پشتیبانی ما همواره آماده پاسخگویی به سوالات شما و راهنمایی در انتخاب بهترین محصول متناسب با نیازتان است.`
@@ -353,6 +358,11 @@ const initDB = () => {
 
       if (!parsed.seo) {
           parsed.seo = defaultSeo;
+          updated = true;
+      }
+
+      if (!parsed.ssl) {
+          parsed.ssl = { enabled: false, certCrt: '', privateKey: '' };
           updated = true;
       }
 
@@ -579,6 +589,9 @@ export const db = {
                 siteUrl: 'https://ashpazkhoneh.ir'
               };
           }
+          if (!settings.ssl) {
+              settings.ssl = { enabled: false, certCrt: '', privateKey: '' };
+          }
           
           return settings;
       }
@@ -597,6 +610,7 @@ export const db = {
             defaultKeywords: '',
             siteUrl: ''
         },
+        ssl: { enabled: false, certCrt: '', privateKey: '' },
         aboutText: ''
       };
     },
