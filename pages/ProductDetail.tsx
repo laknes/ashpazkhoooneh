@@ -86,7 +86,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
       <SEO 
         title={product.metaTitle || product.name}
         description={product.metaDescription || product.description.substring(0, 160)}
@@ -98,58 +98,59 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
 
       <button 
         onClick={onBack}
-        className="flex items-center text-gray-500 hover:text-primary mb-6 transition-colors group"
+        className="flex items-center text-gray-500 hover:text-primary mb-4 md:mb-6 transition-colors group text-sm md:text-base"
       >
         <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
         بازگشت به لیست
       </button>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-12">
+      {/* Main Glassmorphism Container */}
+      <div className="bg-white/70 backdrop-blur-xl border border-white/50 rounded-2xl shadow-sm overflow-hidden mb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-8">
             {/* Image Section */}
-            <div className="p-8 flex items-center justify-center bg-gray-50">
+            <div className="p-4 md:p-8 flex items-center justify-center bg-white/40">
                 <img 
                     src={product.image} 
                     alt={product.name} 
-                    className="max-w-full max-h-[500px] object-contain drop-shadow-lg transition-all duration-500 hover:scale-105 hover:drop-shadow-2xl" 
+                    className="max-w-full max-h-[300px] md:max-h-[500px] object-contain drop-shadow-lg transition-all duration-500 hover:scale-105 hover:drop-shadow-2xl mix-blend-multiply" 
                 />
             </div>
 
             {/* Info Section */}
-            <div className="p-8 flex flex-col">
+            <div className="p-4 md:p-8 flex flex-col">
                 <div className="flex justify-between items-start mb-4">
-                    <span className="bg-orange-100 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                    <span className="bg-orange-100/80 backdrop-blur-sm text-primary px-3 py-1 rounded-full text-xs md:text-sm font-medium">
                         {product.category}
                     </span>
                     <div className="flex items-center text-yellow-400 font-bold">
-                        <span className="text-gray-700 ml-2">{product.rating}</span>
-                        <Star fill="currentColor" size={18} />
+                        <span className="text-gray-700 ml-2 text-sm">{product.rating}</span>
+                        <Star fill="currentColor" size={16} />
                     </div>
                 </div>
 
-                <h1 className="text-3xl font-black text-gray-900 mb-4 leading-tight">{product.name}</h1>
+                <h1 className="text-2xl md:text-3xl font-black text-gray-900 mb-4 leading-tight">{product.name}</h1>
                 
                 <div className="flex items-center mb-6">
-                    <span className="text-3xl font-bold text-primary ml-4">
+                    <span className="text-2xl md:text-3xl font-bold text-primary ml-4">
                         {formatPrice(product.price)}
                     </span>
                     {product.oldPrice && (
-                        <span className="text-xl text-gray-400 line-through decoration-red-500">
+                        <span className="text-lg md:text-xl text-gray-400 line-through decoration-red-500">
                             {formatPrice(product.oldPrice)}
                         </span>
                     )}
                 </div>
 
-                <div className="prose prose-sm text-gray-600 mb-8 max-w-none">
+                <div className="prose prose-sm text-gray-600 mb-8 max-w-none text-justify">
                     <p>{product.description}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-8">
-                    <div className="flex items-center text-sm text-gray-600 bg-gray-50 p-3 rounded-lg hover:bg-orange-50 transition-colors">
+                    <div className="flex items-center text-xs md:text-sm text-gray-600 bg-white/50 border border-white/60 p-3 rounded-lg hover:bg-orange-50/50 transition-colors">
                         <Truck size={18} className="ml-2 text-primary" />
                         ارسال رایگان تهران
                     </div>
-                    <div className="flex items-center text-sm text-gray-600 bg-gray-50 p-3 rounded-lg hover:bg-orange-50 transition-colors">
+                    <div className="flex items-center text-xs md:text-sm text-gray-600 bg-white/50 border border-white/60 p-3 rounded-lg hover:bg-orange-50/50 transition-colors">
                         <Shield size={18} className="ml-2 text-primary" />
                         ۱۸ ماه گارانتی
                     </div>
@@ -165,9 +166,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                     </button>
 
                     {/* AI Section */}
-                    <div className="border border-indigo-100 bg-indigo-50 rounded-xl p-4 transition-colors hover:border-indigo-200">
+                    <div className="border border-indigo-100 bg-indigo-50/50 backdrop-blur-sm rounded-xl p-4 transition-colors hover:border-indigo-200">
                         <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-bold text-indigo-900 flex items-center">
+                            <h3 className="font-bold text-indigo-900 flex items-center text-sm md:text-base">
                                 <Sparkles size={18} className="ml-2 text-indigo-600" />
                                 نظر هوش مصنوعی
                             </h3>
@@ -183,7 +184,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                         </div>
                         
                         {aiAdvice && (
-                            <p className="text-sm text-indigo-800 leading-relaxed animate-in fade-in bg-white p-3 rounded-lg border border-indigo-100">
+                            <p className="text-sm text-indigo-800 leading-relaxed animate-in fade-in bg-white/80 p-3 rounded-lg border border-indigo-100">
                                 {aiAdvice}
                             </p>
                         )}
@@ -201,7 +202,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
       {/* Related Products */}
       {relatedProducts.length > 0 && (
         <div className="mt-12 animate-in slide-in-from-bottom-10 duration-700">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800 border-r-4 border-primary pr-3">محصولات مشابه</h2>
+            <h2 className="text-xl md:text-2xl font-bold mb-6 text-gray-800 border-r-4 border-primary pr-3">محصولات مشابه</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {relatedProducts.map(p => (
                     <ProductCard 

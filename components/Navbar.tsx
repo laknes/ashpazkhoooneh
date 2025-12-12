@@ -76,6 +76,7 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
     onProductSelect(product);
     setSearchQuery('');
     setShowSuggestions(false);
+    setIsMenuOpen(false); // Close mobile menu if open
   };
 
   const handleUserClick = () => {
@@ -84,6 +85,7 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
     } else {
       onChangeView('LOGIN');
     }
+    setIsMenuOpen(false);
   };
 
   return (
@@ -106,7 +108,7 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
             className="flex-shrink-0 flex items-center cursor-pointer group"
             onClick={() => onChangeView('HOME')}
           >
-            <span className="text-2xl font-black text-primary ml-2 group-hover:scale-105 transition-transform duration-200 drop-shadow-sm">آشپزخونه</span>
+            <span className="text-xl md:text-2xl font-black text-primary ml-2 group-hover:scale-105 transition-transform duration-200 drop-shadow-sm">آشپزخونه</span>
           </div>
 
           {/* Desktop Navigation */}
@@ -128,8 +130,8 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
           </div>
 
           {/* Actions */}
-          <div className="flex items-center space-x-4 space-x-reverse">
-            {/* Search Bar with Suggestions */}
+          <div className="flex items-center space-x-2 md:space-x-4 space-x-reverse">
+            {/* Search Bar with Suggestions (Desktop) */}
             <div className="hidden md:block relative text-gray-500 focus-within:text-gray-700 w-64 lg:w-80" ref={searchRef}>
                <div className="absolute inset-y-0 right-0 pl-3 flex items-center pointer-events-none pr-3">
                 <Search size={18} />
@@ -160,11 +162,6 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
                         </div>
                     ))}
                 </div>
-              )}
-              {showSuggestions && searchQuery && suggestions.length === 0 && (
-                 <div className="absolute top-full right-0 w-full mt-2 glass-card rounded-xl shadow-xl border border-white/50 p-4 text-center text-sm text-gray-500 z-50">
-                    محصولی یافت نشد
-                 </div>
               )}
             </div>
 
@@ -200,25 +197,71 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
       
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden glass-card border-t border-white/50 animate-in slide-in-from-top-2 duration-200">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {navItems.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => {
-                  onChangeView(item.view);
-                  setIsMenuOpen(false);
-                }}
-                className={`flex w-full items-center px-3 py-4 rounded-xl text-base font-medium transition-colors active:scale-98 ${
-                    currentView === item.view
-                    ? 'text-primary bg-orange-50/50'
-                    : 'text-gray-700 hover:text-primary hover:bg-white/40'
-                }`}
-              >
-                 {item.icon && <item.icon size={20} className="ml-2" />}
-                {item.label}
-              </button>
-            ))}
+        <div className="md:hidden glass-card border-t border-white/50 animate-in slide-in-from-top-2 duration-200 absolute w-full top-16 left-0 z-40 max-h-[85vh] overflow-y-auto">
+          <div className="p-4 space-y-4">
+             {/* Mobile Search */}
+             <div className="relative">
+               <input 
+                  type="text" 
+                  placeholder="جستجوی محصول..." 
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full pr-10 pl-3 py-3 border border-gray-200 rounded-xl bg-white/70 focus:outline-none focus:ring-2 focus:ring-primary"
+               />
+               <div className="absolute inset-y-0 right-0 pl-3 flex items-center pointer-events-none pr-3">
+                 <Search size={18} className="text-gray-400" />
+               </div>
+
+                {/* Mobile Suggestions */}
+                {searchQuery && suggestions.length > 0 && (
+                    <div className="mt-2 bg-white rounded-xl shadow-sm border border-gray-100">
+                        {suggestions.map(product => (
+                             <div 
+                                key={product.id}
+                                onClick={() => handleSuggestionClick(product)}
+                                className="flex items-center p-3 border-b border-gray-50 last:border-0"
+                            >
+                                <img src={product.image} alt={product.name} className="w-8 h-8 object-cover rounded-md ml-3" />
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="text-xs font-bold text-gray-800 line-clamp-1">{product.name}</h4>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+             </div>
+
+             <div className="space-y-1">
+                {navItems.map((item) => (
+                <button
+                    key={item.label}
+                    onClick={() => {
+                    onChangeView(item.view);
+                    setIsMenuOpen(false);
+                    }}
+                    className={`flex w-full items-center px-4 py-4 rounded-xl text-base font-medium transition-colors active:scale-98 ${
+                        currentView === item.view
+                        ? 'text-primary bg-orange-50/50'
+                        : 'text-gray-700 hover:text-primary hover:bg-white/40'
+                    }`}
+                >
+                    {item.icon && <item.icon size={20} className="ml-3" />}
+                    {item.label}
+                </button>
+                ))}
+            </div>
+            
+            {user && (
+                <div className="pt-4 border-t border-gray-100">
+                    <button 
+                         onClick={handleUserClick}
+                         className="flex items-center w-full px-4 py-3 text-gray-700 bg-gray-50 rounded-xl"
+                    >
+                        <UserIcon size={20} className="ml-3" />
+                        پروفایل کاربری ({user.name})
+                    </button>
+                </div>
+            )}
           </div>
         </div>
       )}

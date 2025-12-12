@@ -66,20 +66,41 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     onClick(product);
   };
 
+  // Helper to optimize image URLs (especially for Unsplash)
+  const getOptimizedImageUrl = (url: string, width = 400) => {
+    if (!url) return '';
+    if (url.includes('images.unsplash.com')) {
+      const separator = url.includes('?') ? '&' : '?';
+      // Ensure we request WebP (auto=format usually does this based on Accept header)
+      // and resize to the needed width to save bandwidth
+      let newUrl = url;
+      if (!newUrl.includes('auto=format')) newUrl += `${separator}auto=format`;
+      if (!newUrl.includes('q=')) newUrl += `&q=80`;
+      if (!newUrl.includes('w=')) newUrl += `&w=${width}`;
+      return newUrl;
+    }
+    return url;
+  };
+
+  const displayImage = getOptimizedImageUrl(product.image);
+
   return (
     <>
-      {/* Main Card Container - Glassmorphism */}
+      {/* Main Card Container - Glassmorphism using Tailwind */}
       <div 
-        className="group relative flex flex-col h-full glass-card rounded-2xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 cursor-pointer overflow-hidden isolate hover:bg-white/80"
+        className="group relative flex flex-col h-full bg-white/70 backdrop-blur-xl border border-white/50 rounded-2xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 cursor-pointer overflow-hidden isolate hover:bg-white/80 shadow-sm"
         onClick={handleCardClick}
       >
         {/* Image Section */}
-        <div className="relative aspect-square overflow-hidden bg-white/40">
+        <div className="relative aspect-square overflow-hidden bg-white/40 p-4">
           <img 
-            src={product.image} 
+            src={displayImage} 
             alt={product.name} 
             loading="lazy"
-            className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
+            decoding="async"
+            width="400"
+            height="400"
+            className="w-full h-full object-contain object-center transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
           />
           
           {/* Top Left: Wishlist Button */}
@@ -125,11 +146,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="flex flex-col flex-grow p-4 relative z-10">
           {/* Category & Rating */}
           <div className="flex justify-between items-start mb-2">
-            <span className="text-[10px] md:text-xs text-gray-500 bg-gray-100/80 px-2 py-1 rounded-full backdrop-blur-sm">
+            <span className="text-[10px] md:text-xs text-gray-600 bg-white/60 px-2 py-1 rounded-full backdrop-blur-sm border border-white/50">
               {product.category}
             </span>
             <div className="flex items-center text-yellow-500 text-xs font-bold drop-shadow-sm">
-              <span className="text-gray-400 ml-1 text-[10px]">({product.reviews})</span>
+              <span className="text-gray-500 ml-1 text-[10px]">({product.reviews})</span>
               {product.rating} <Star size={12} fill="currentColor" className="mr-1" />
             </div>
           </div>
@@ -140,7 +161,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </h3>
           
           {/* Footer: Price & Actions */}
-          <div className="flex items-end justify-between mt-auto pt-3 border-t border-gray-100/50">
+          <div className="flex items-end justify-between mt-auto pt-3 border-t border-gray-200/50">
             <div className="flex flex-col">
               {product.oldPrice && (
                 <span className="text-xs text-gray-400 line-through mb-0.5">
@@ -198,7 +219,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <X size={32} />
           </button>
           <img 
-            src={product.image} 
+            src={getOptimizedImageUrl(product.image, 1200)} 
             alt={product.name} 
             loading="lazy"
             className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300"
@@ -215,7 +236,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           onClick={(e) => { e.stopPropagation(); setShowQuickView(false); }}
         >
           <div 
-            className="glass-card bg-white/90 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-300 overflow-hidden border border-white/60"
+            className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-300 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Sticky Close Button */}
@@ -233,7 +254,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 {/* Image */}
                 <div className="bg-white/40 p-8 flex items-center justify-center min-h-[300px]">
                   <img 
-                    src={product.image} 
+                    src={getOptimizedImageUrl(product.image, 800)} 
                     alt={product.name} 
                     loading="lazy"
                     className="max-w-full max-h-[400px] object-contain drop-shadow-xl mix-blend-multiply"
@@ -320,3 +341,4 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     </>
   );
 };
+    

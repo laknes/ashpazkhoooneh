@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Product, Category } from '../types';
 import { db } from '../services/db';
@@ -59,9 +60,9 @@ const Catalog: React.FC<CatalogProps> = ({ onProductClick, onAddToCart, wishlist
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col md:flex-row gap-8">
         
-        {/* Sidebar Filters */}
+        {/* Sidebar Filters - Glassmorphism */}
         <div className="w-full md:w-64 space-y-8">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-24">
+            <div className="bg-white/70 backdrop-blur-lg border border-white/40 p-6 rounded-xl shadow-sm sticky top-24">
                 <div className="flex items-center mb-4 text-gray-800">
                     <Filter size={20} className="ml-2 text-primary" />
                     <h3 className="font-bold text-lg">فیلترها</h3>
@@ -71,7 +72,7 @@ const Catalog: React.FC<CatalogProps> = ({ onProductClick, onAddToCart, wishlist
                     <div>
                         <h4 className="font-medium text-sm text-gray-600 mb-2">دسته‌بندی</h4>
                         <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pl-2">
-                            <label className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors">
+                            <label className="flex items-center cursor-pointer hover:bg-white/50 p-1 rounded transition-colors">
                                 <input 
                                     type="radio" 
                                     name="category" 
@@ -82,7 +83,7 @@ const Catalog: React.FC<CatalogProps> = ({ onProductClick, onAddToCart, wishlist
                                 <span className="mr-2 text-sm text-gray-700">همه محصولات</span>
                             </label>
                             {categories.map(cat => (
-                                <label key={cat.id} className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors">
+                                <label key={cat.id} className="flex items-center cursor-pointer hover:bg-white/50 p-1 rounded transition-colors">
                                     <input 
                                         type="radio" 
                                         name="category" 
@@ -96,7 +97,7 @@ const Catalog: React.FC<CatalogProps> = ({ onProductClick, onAddToCart, wishlist
                         </div>
                     </div>
 
-                    <div className="pt-4 border-t">
+                    <div className="pt-4 border-t border-gray-200/50">
                         <h4 className="font-medium text-sm text-gray-600 mb-2">محدوده قیمت</h4>
                         <input 
                             type="range" 
@@ -118,7 +119,7 @@ const Catalog: React.FC<CatalogProps> = ({ onProductClick, onAddToCart, wishlist
 
         {/* Product Grid */}
         <div className="flex-1">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white/70 backdrop-blur-lg border border-white/40 p-4 rounded-xl shadow-sm gap-4">
                 <span className="text-gray-600 font-medium text-sm">
                     نمایش {filteredProducts.length} محصول
                 </span>
@@ -160,7 +161,7 @@ const Catalog: React.FC<CatalogProps> = ({ onProductClick, onAddToCart, wishlist
             </div>
 
             {filteredProducts.length === 0 && (
-                <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-200">
+                <div className="text-center py-20 bg-white/50 backdrop-blur-sm rounded-xl border border-dashed border-gray-300">
                     <div className="text-4xl mb-4">🔍</div>
                     <p className="text-gray-500 text-lg font-medium">محصولی با این مشخصات یافت نشد.</p>
                     <button 

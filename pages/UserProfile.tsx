@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { User, Order } from '../types';
 import { db } from '../services/db';
 import { formatPrice, PROVINCES, getCitiesForProvince, VALIDATION_REGEX } from '../constants';
-import { User as UserIcon, LogOut, Package, MapPin, Mail, Smartphone, Edit2, Save, FileText, X, AlertCircle, LayoutDashboard } from 'lucide-react';
+import { User as UserIcon, LogOut, Package, MapPin, Mail, Smartphone, Edit2, Save, FileText, X, AlertCircle, LayoutDashboard, Key } from 'lucide-react';
 
 interface UserProfileProps {
   user: User;
@@ -24,6 +24,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout, onUpdateUser,
   const [editCity, setEditCity] = useState(user.city || '');
   const [editAddress, setEditAddress] = useState(user.address || '');
   const [editPostalCode, setEditPostalCode] = useState(user.postalCode || '');
+  const [editPassword, setEditPassword] = useState(''); // New state for password change
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -62,18 +63,26 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout, onUpdateUser,
         return;
     }
 
-    const updatedUser = db.users.update(user.id, {
+    const updates: Partial<User> = {
         name: editName,
         email: editEmail,
         province: editProvince,
         city: editCity,
         address: editAddress,
         postalCode: editPostalCode
-    });
+    };
+
+    // Only update password if user entered a new one
+    if (editPassword.trim()) {
+        updates.password = editPassword;
+    }
+
+    const updatedUser = db.users.update(user.id, updates);
 
     if (updatedUser && onUpdateUser) {
         onUpdateUser(updatedUser);
         setIsEditing(false);
+        setEditPassword(''); // Clear password field after save
         alert('اطلاعات کاربری با موفقیت بروزرسانی شد.');
     }
   };
@@ -85,6 +94,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout, onUpdateUser,
     setEditCity(user.city || '');
     setEditAddress(user.address || '');
     setEditPostalCode(user.postalCode || '');
+    setEditPassword('');
     setErrors({});
     setIsEditing(false);
   };
@@ -343,7 +353,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout, onUpdateUser,
                                     type="text" 
                                     value={editPostalCode}
                                     onChange={e => setEditPostalCode(e.target.value)}
-                                    className={`w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary focus:outline-none dir-ltr ${errors.postalCode ? 'border-red-500' : ''}`}
+                                    className={`w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary focus:outline-none dir-ltr font-mono ${errors.postalCode ? 'border-red-500' : ''}`}
                                     maxLength={10}
                                   />
                                   <ErrorMsg field="postalCode" />
@@ -378,6 +388,22 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout, onUpdateUser,
                                     value={editAddress}
                                     onChange={e => setEditAddress(e.target.value)}
                                     className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary focus:outline-none"
+                                  />
+                              </div>
+                              
+                              <div className="md:col-span-2 bg-orange-50/50 p-4 rounded-xl border border-orange-100">
+                                  <div className="flex items-center gap-2 mb-2 text-gray-800 font-bold">
+                                      <Key size={18} className="text-primary"/>
+                                      تغییر رمز عبور
+                                  </div>
+                                  <p className="text-xs text-gray-500 mb-3">اگر قصد تغییر رمز عبور را ندارید، این فیلد را خالی بگذارید.</p>
+                                  <input 
+                                    type="text" 
+                                    value={editPassword}
+                                    onChange={e => setEditPassword(e.target.value)}
+                                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary focus:outline-none dir-ltr font-mono"
+                                    placeholder="رمز عبور جدید..."
+                                    autoComplete="new-password"
                                   />
                               </div>
                           </div>

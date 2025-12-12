@@ -21,6 +21,9 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
 
+  // Get settings for SEO
+  const settings = db.settings.get();
+
   useEffect(() => {
     // Fetch data from DB
     const allProducts = db.products.getAll();
@@ -30,20 +33,68 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
     setHeroSlides(db.settings.get().heroSlides);
   }, []);
 
+  // JSON-LD Schema
+  const schema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "name": "آشپزخونه",
+        "url": settings.seo.siteUrl,
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": `${settings.seo.siteUrl}/?search={search_term_string}`
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "Store",
+        "name": "آشپزخونه",
+        "image": settings.heroSlides[0]?.image || "",
+        "description": settings.seo.defaultDescription,
+        "telephone": settings.contact.phone,
+        "email": settings.contact.email,
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": settings.contact.address,
+          "addressLocality": "تهران",
+          "addressCountry": "IR"
+        },
+        "url": settings.seo.siteUrl,
+        "priceRange": "IRR",
+        "sameAs": [
+          settings.socialMedia.instagram,
+          settings.socialMedia.twitter,
+          settings.socialMedia.linkedin,
+          settings.socialMedia.telegram
+        ].filter(Boolean)
+      }
+    ]
+  };
+
   return (
     <div className="space-y-16 pb-12">
-      <SEO /> {/* Uses default settings from DB */}
+      <SEO 
+        title="لوازم لوکس خانه و آشپزخانه"
+        description={settings.seo.defaultDescription}
+        keywords={settings.seo.defaultKeywords}
+        jsonLd={schema}
+        type="website"
+      />
 
       {/* 3D Hero Slider */}
       <section>
         <HeroSlider slides={heroSlides} onChangeView={onChangeView} />
       </section>
 
-      {/* Features */}
+      {/* Features - Glassmorphism */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="flex items-center p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
-                <div className="p-3 bg-orange-100 text-primary rounded-full ml-4">
+            <div className="flex items-center p-6 bg-white/70 backdrop-blur-lg border border-white/40 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                <div className="p-3 bg-orange-100/80 text-primary rounded-full ml-4 backdrop-blur-sm">
                     <Truck size={32} />
                 </div>
                 <div>
@@ -51,8 +102,8 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
                     <p className="text-gray-500 text-sm">تحویل ۲۴ ساعته در تهران</p>
                 </div>
             </div>
-            <div className="flex items-center p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
-                <div className="p-3 bg-orange-100 text-primary rounded-full ml-4">
+            <div className="flex items-center p-6 bg-white/70 backdrop-blur-lg border border-white/40 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                <div className="p-3 bg-orange-100/80 text-primary rounded-full ml-4 backdrop-blur-sm">
                     <ShieldCheck size={32} />
                 </div>
                 <div>
@@ -60,8 +111,8 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
                     <p className="text-gray-500 text-sm">تضمین بازگشت وجه ۷ روزه</p>
                 </div>
             </div>
-            <div className="flex items-center p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
-                <div className="p-3 bg-orange-100 text-primary rounded-full ml-4">
+            <div className="flex items-center p-6 bg-white/70 backdrop-blur-lg border border-white/40 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                <div className="p-3 bg-orange-100/80 text-primary rounded-full ml-4 backdrop-blur-sm">
                     <Clock size={32} />
                 </div>
                 <div>
@@ -78,11 +129,11 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             {categories.map(cat => (
                 <div key={cat.id} className="group cursor-pointer flex flex-col items-center">
-                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white shadow-md group-hover:shadow-xl group-hover:border-orange-100 transition-all duration-300 mb-3 group-hover:-translate-y-2">
+                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/50 shadow-md group-hover:shadow-xl group-hover:border-orange-100 transition-all duration-300 mb-3 group-hover:-translate-y-2 bg-white/30 backdrop-blur-sm">
                       {cat.image ? (
                         <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-gray-100 flex items-center justify-center text-4xl">
+                        <div className="w-full h-full bg-white/50 flex items-center justify-center text-4xl text-gray-400">
                            {cat.icon || '📦'}
                         </div>
                       )}
@@ -121,7 +172,7 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
       </section>
 
       {/* Best Sellers Section */}
-      <section className="bg-orange-50 py-16">
+      <section className="bg-orange-50/50 backdrop-blur-sm py-16 border-y border-orange-100/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-end mb-8">
                 <div>
@@ -149,7 +200,7 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
                             />
                         </div>
                         <div className="mt-4 flex justify-center">
-                            <span className="bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+                            <span className="bg-gray-900/90 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md backdrop-blur-md">
                                 رتبه {idx + 1} فروش
                             </span>
                         </div>

@@ -4,7 +4,7 @@ import { CartItem, ViewState } from '../types';
 import { formatPrice } from '../constants';
 import { Trash2, Plus, Minus, ArrowLeft } from 'lucide-react';
 
-// Helper for empty state icon - Moved to top to prevent ReferenceError
+// Helper for empty state icon
 const ShoppingCartIcon = ({ size, className }: { size: number, className?: string }) => (
     <svg 
         xmlns="http://www.w3.org/2000/svg" 
@@ -58,19 +58,28 @@ const Cart: React.FC<CartProps> = ({ cart, onUpdateQuantity, onRemove, onChangeV
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl font-bold mb-8 flex items-center">
         سبد خرید
-        <span className="mr-2 text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+        <span className="mr-2 text-sm font-normal text-gray-500 bg-white/60 backdrop-blur-sm border border-white/50 px-2 py-1 rounded-full">
             {cart.length} کالا
         </span>
       </h1>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Cart Items */}
+        {/* Cart Items - Glassmorphism */}
         <div className="flex-1 space-y-4">
             {cart.map(item => (
-                <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow duration-200">
-                    <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded-lg bg-gray-50" />
+                <div key={item.id} className="bg-white/70 backdrop-blur-lg border border-white/40 p-4 rounded-xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:shadow-md transition-shadow duration-200">
+                    <div className="flex items-center w-full sm:w-auto gap-4">
+                        <img src={item.image} alt={item.name} className="w-20 h-20 md:w-24 md:h-24 object-cover rounded-lg bg-white/40 border border-white/30 flex-shrink-0" />
+                        <div className="flex-1 sm:hidden">
+                            <h3 className="font-bold text-gray-800 mb-1 text-sm line-clamp-1">{item.name}</h3>
+                            <span className="text-xs text-gray-500">{item.category}</span>
+                            <div className="mt-1 text-primary font-bold text-sm">
+                                {formatPrice(item.price)}
+                            </div>
+                        </div>
+                    </div>
                     
-                    <div className="flex-1">
+                    <div className="hidden sm:block flex-1">
                         <h3 className="font-bold text-gray-800 mb-1">{item.name}</h3>
                         <span className="text-sm text-gray-500">{item.category}</span>
                         <div className="mt-2 text-primary font-bold">
@@ -78,16 +87,8 @@ const Cart: React.FC<CartProps> = ({ cart, onUpdateQuantity, onRemove, onChangeV
                         </div>
                     </div>
 
-                    <div className="flex flex-col items-end gap-4">
-                        <button 
-                            onClick={() => onRemove(item.id)}
-                            className="text-red-400 hover:text-red-600 transition-all duration-200 hover:scale-110 active:scale-90 hover:rotate-6"
-                            title="حذف از سبد"
-                        >
-                            <Trash2 size={18} />
-                        </button>
-                        
-                        <div className="flex items-center bg-gray-50 rounded-lg p-1">
+                    <div className="flex w-full sm:w-auto items-center justify-between sm:flex-col sm:items-end gap-4 mt-2 sm:mt-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100/50">
+                        <div className="flex items-center bg-white/50 border border-white/60 rounded-lg p-1">
                             <button 
                                 onClick={() => onUpdateQuantity(item.id, 1)}
                                 className="p-1 hover:bg-white rounded-md transition-all duration-200 shadow-sm hover:shadow active:scale-90"
@@ -103,15 +104,24 @@ const Cart: React.FC<CartProps> = ({ cart, onUpdateQuantity, onRemove, onChangeV
                                 <Minus size={16} />
                             </button>
                         </div>
+
+                        <button 
+                            onClick={() => onRemove(item.id)}
+                            className="text-red-400 hover:text-red-600 transition-all duration-200 hover:scale-110 active:scale-90 flex items-center gap-1 text-sm sm:text-base"
+                            title="حذف از سبد"
+                        >
+                            <Trash2 size={18} />
+                            <span className="sm:hidden">حذف</span>
+                        </button>
                     </div>
                 </div>
             ))}
         </div>
 
-        {/* Summary */}
+        {/* Summary - Glassmorphism */}
         <div className="w-full lg:w-96">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-24">
-                <h3 className="font-bold text-lg mb-6 border-b pb-4">خلاصه سفارش</h3>
+            <div className="bg-white/70 backdrop-blur-lg border border-white/40 p-6 rounded-xl shadow-sm sticky top-24">
+                <h3 className="font-bold text-lg mb-6 border-b border-gray-200/50 pb-4">خلاصه سفارش</h3>
                 
                 <div className="space-y-3 text-sm text-gray-600 mb-6">
                     <div className="flex justify-between">
@@ -126,7 +136,7 @@ const Cart: React.FC<CartProps> = ({ cart, onUpdateQuantity, onRemove, onChangeV
                     </div>
                 </div>
 
-                <div className="flex justify-between font-black text-lg text-gray-900 border-t pt-4 mb-6">
+                <div className="flex justify-between font-black text-lg text-gray-900 border-t border-gray-200/50 pt-4 mb-6">
                     <span>مبلغ قابل پرداخت</span>
                     <span>{formatPrice(total)}</span>
                 </div>
