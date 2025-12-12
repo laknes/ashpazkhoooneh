@@ -78,7 +78,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <img 
             src={product.image} 
             alt={product.name} 
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
+            loading="lazy"
+            className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
           />
           
           {/* Top Left: Wishlist Button */}
@@ -199,6 +200,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <img 
             src={product.image} 
             alt={product.name} 
+            loading="lazy"
             className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300"
             onClick={(e) => e.stopPropagation()} 
           />
@@ -233,6 +235,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   <img 
                     src={product.image} 
                     alt={product.name} 
+                    loading="lazy"
                     className="max-w-full max-h-[400px] object-contain drop-shadow-xl mix-blend-multiply"
                   />
                 </div>
