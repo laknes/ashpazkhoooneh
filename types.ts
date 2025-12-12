@@ -52,7 +52,11 @@ export interface Category {
   id: number;
   name: string;
   image: string;
-  icon?: string; 
+  icon?: string;
+  // SEO Specific Fields
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
 }
 
 export interface HeroSlide {

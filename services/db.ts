@@ -48,16 +48,124 @@ const safeSave = (key: string, value: any): boolean => {
   }
 };
 
+// Extra mock products to fill database
+const EXTRA_PRODUCTS: Product[] = [
+    {
+      id: 11,
+      name: "همزن برقی کاسه‌دار حرفه‌ای",
+      price: 3200000,
+      category: "لوازم برقی",
+      image: "https://images.unsplash.com/photo-1574577833443-4b6790a6f477?q=80&w=400&auto=format&fit=crop",
+      description: "همزن برقی با کاسه استیل چرخان و سری‌های متعدد برای قنادی حرفه‌ای.",
+      rating: 4.6,
+      reviews: 42,
+      features: ["توان ۵۰۰ وات", "تنظیم ۵ سرعته", "عملکرد توربو"]
+    },
+    {
+      id: 12,
+      name: "سرویس قاشق و چنگال ۲۴ نفره",
+      price: 6800000,
+      oldPrice: 7500000,
+      category: "سرو و پذیرایی",
+      image: "https://images.unsplash.com/photo-1581643627063-23959c994791?q=80&w=400&auto=format&fit=crop",
+      description: "سرویس قاشق و چنگال استیل ضد زنگ با طراحی کلاسیک و جعبه چوبی.",
+      rating: 4.8,
+      reviews: 15,
+      features: ["استیل ۱۰/۱۸", "ضمانت مادام‌العمر", "قابل شستشو در ماشین"]
+    },
+    {
+      id: 13,
+      name: "آبمیوه‌گیری ۴ کاره",
+      price: 5400000,
+      category: "نوشیدنی‌ساز",
+      image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=400&auto=format&fit=crop",
+      description: "دستگاه چندکاره شامل آبمیوه‌گیری، مخلوط‌کن، آسیاب و خردکن.",
+      rating: 4.4,
+      reviews: 67,
+      features: ["دهانه بزرگ", "موتور ۸۰۰ وات", "پایه ضد لغزش"]
+    },
+    {
+      id: 14,
+      name: "تابه وک چدنی",
+      price: 1200000,
+      category: "پخت و پز",
+      image: "https://images.unsplash.com/photo-1533722709088-348df8ca9906?q=80&w=400&auto=format&fit=crop",
+      description: "تابه وک چدنی مناسب برای پخت انواع غذاهای آسیایی و رژیمی.",
+      rating: 4.7,
+      reviews: 34,
+      features: ["توزیع یکنواخت حرارت", "دسته چوبی", "بدون روکش شیمیایی"]
+    },
+    {
+      id: 15,
+      name: "ترازو آشپزخانه دیجیتال",
+      price: 450000,
+      category: "ابزار آشپزخانه",
+      image: "https://images.unsplash.com/photo-1595348020949-87cdfbb44174?q=80&w=400&auto=format&fit=crop",
+      description: "ترازوی دقیق با صفحه استیل و دقت ۱ گرم برای شیرینی‌پزی.",
+      rating: 4.5,
+      reviews: 89,
+      features: ["حداکثر ۵ کیلوگرم", "نمایشگر LCD", "قابلیت پارسنگ"]
+    },
+    {
+      id: 16,
+      name: "طی زمین‌شوی اسپری‌دار",
+      price: 650000,
+      category: "شستشو و نظافت",
+      image: "https://images.unsplash.com/photo-1585664811087-47f65be1bac9?q=80&w=400&auto=format&fit=crop",
+      description: "طی با مخزن اسپری آب و مواد شوینده، همراه با پد میکروفایبر.",
+      rating: 4.2,
+      reviews: 156,
+      features: ["چرخش ۳۶۰ درجه", "سبک و ارگونومیک", "پد قابل شستشو"]
+    },
+    {
+      id: 17,
+      name: "باکس نان چوبی",
+      price: 890000,
+      category: "نظم‌دهنده",
+      image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=400&auto=format&fit=crop",
+      description: "جعبه نان چوبی با درب کشویی برای تازه نگه داشتن انواع نان.",
+      rating: 4.6,
+      reviews: 23,
+      features: ["چوب بامبو", "درب روان", "تهویه هوا"]
+    },
+    {
+      id: 18,
+      name: "پیشبند آشپزی کتان",
+      price: 280000,
+      category: "منسوجات",
+      image: "https://images.unsplash.com/photo-1556910638-6cdac31d44dc?q=80&w=400&auto=format&fit=crop",
+      description: "پیشبند آشپزی شیک و مقاوم از جنس کتان خالص.",
+      rating: 4.8,
+      reviews: 45,
+      features: ["قابل تنظیم", "جیب‌دار", "ضد لک"]
+    },
+    {
+      id: 19,
+      name: "شمع معطر لیوانی",
+      price: 180000,
+      category: "دکوراتیو",
+      image: "https://images.unsplash.com/photo-1602523961358-f9f03dd557db?q=80&w=400&auto=format&fit=crop",
+      description: "شمع معطر با رایحه وانیل و قهوه برای خوشبو کردن فضای آشپزخانه.",
+      rating: 4.9,
+      reviews: 112,
+      features: ["زمان سوخت ۴۰ ساعت", "سویا وکس", "فیتیله نخی"]
+    }
+];
+
 // Initialize DB with mock data if empty
 const initDB = () => {
   try {
     // Always update categories to match constants (dev mode behavior) to show new categories
     safeSave(DB_CATEGORIES_KEY, CATEGORIES);
 
-    // If products are empty OR we want to reset to show new mock data
+    // If products are empty OR we want to reset/expand mock data
     const storedProducts = safeParse<Product[]>(DB_PRODUCTS_KEY, []);
-    if (storedProducts.length <= 6) {
-       safeSave(DB_PRODUCTS_KEY, MOCK_PRODUCTS);
+    // Check if we need to seed more data (basic check: if less than mock + extra count)
+    if (storedProducts.length <= 10) {
+       const allMocks = [...MOCK_PRODUCTS, ...EXTRA_PRODUCTS];
+       // De-duplicate by ID just in case
+       const uniqueProducts = Array.from(new Map(allMocks.map(item => [item.id, item])).values());
+       safeSave(DB_PRODUCTS_KEY, uniqueProducts);
     }
 
     if (!localStorage.getItem(DB_ORDERS_KEY)) {

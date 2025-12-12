@@ -145,10 +145,13 @@ const AdminBlog: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">تصویر مقاله</label>
+                <div className="text-xs text-gray-500 mb-2">حداکثر ۸۰۰ پیکسل</div>
                 <ImageUploader 
                     currentImage={editingPost.image}
                     onImageSelect={(base64) => setEditingPost({...editingPost, image: base64})}
                     className="h-40"
+                    maxWidth={800}
+                    maxHeight={600}
                 />
               </div>
 

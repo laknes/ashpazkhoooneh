@@ -151,11 +151,14 @@ const AdminProducts: React.FC = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">تصویر محصول</label>
                             <div className="bg-blue-50 text-blue-800 text-xs px-2 py-1.5 rounded-lg mb-2 flex items-center">
                                 <ImageIcon size={12} className="ml-1" />
-                                ابعاد: ۸۰۰ × ۸۰۰ پیکسل (مربع)
+                                حداکثر ۸۰۰ پیکسل
                             </div>
                             <ImageUploader 
                                 currentImage={editingProduct.image}
                                 onImageSelect={(base64) => setEditingProduct({...editingProduct, image: base64})}
+                                maxWidth={800}
+                                maxHeight={800}
+                                quality={0.8}
                             />
                         </div>
 

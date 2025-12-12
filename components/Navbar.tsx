@@ -87,7 +87,7 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
   };
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
+    <nav className="glass-nav sticky top-0 z-50 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           
@@ -95,7 +95,7 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
           <div className="flex items-center md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-gray-500 hover:text-primary focus:outline-none hover:scale-110 active:scale-90 transition-transform duration-200"
+              className="text-gray-600 hover:text-primary focus:outline-none hover:scale-110 active:scale-90 transition-transform duration-200"
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -106,7 +106,7 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
             className="flex-shrink-0 flex items-center cursor-pointer group"
             onClick={() => onChangeView('HOME')}
           >
-            <span className="text-2xl font-black text-primary ml-2 group-hover:scale-105 transition-transform duration-200">آشپزخونه</span>
+            <span className="text-2xl font-black text-primary ml-2 group-hover:scale-105 transition-transform duration-200 drop-shadow-sm">آشپزخونه</span>
           </div>
 
           {/* Desktop Navigation */}
@@ -115,10 +115,10 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
               <button
                 key={item.label}
                 onClick={() => onChangeView(item.view)}
-                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 active:scale-95 ${
+                className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 ${
                   currentView === item.view
-                    ? 'text-primary bg-orange-50'
-                    : 'text-gray-700 hover:text-primary hover:bg-gray-50'
+                    ? 'text-primary bg-orange-50/50 shadow-sm'
+                    : 'text-gray-700 hover:text-primary hover:bg-white/40'
                 }`}
               >
                 {item.icon && <item.icon size={18} className="ml-2" />}
@@ -130,7 +130,7 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
           {/* Actions */}
           <div className="flex items-center space-x-4 space-x-reverse">
             {/* Search Bar with Suggestions */}
-            <div className="hidden md:block relative text-gray-400 focus-within:text-gray-600 w-64 lg:w-80" ref={searchRef}>
+            <div className="hidden md:block relative text-gray-500 focus-within:text-gray-700 w-64 lg:w-80" ref={searchRef}>
                <div className="absolute inset-y-0 right-0 pl-3 flex items-center pointer-events-none pr-3">
                 <Search size={18} />
               </div>
@@ -140,17 +140,17 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
                 value={searchQuery}
                 onChange={handleSearchChange}
                 onFocus={() => { if(searchQuery) setShowSuggestions(true); }}
-                className="block w-full pr-10 pl-3 py-2 border border-gray-300 rounded-full leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out hover:bg-white"
+                className="block w-full pr-10 pl-3 py-2 border border-gray-200 rounded-full leading-5 bg-white/50 backdrop-blur-sm placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition duration-200 ease-in-out shadow-sm"
               />
               
               {/* Dropdown Suggestions */}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full right-0 w-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full right-0 w-full mt-2 glass-card rounded-xl shadow-xl border border-white/50 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                     {suggestions.map(product => (
                         <div 
                             key={product.id}
                             onClick={() => handleSuggestionClick(product)}
-                            className="flex items-center p-3 hover:bg-orange-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0 group"
+                            className="flex items-center p-3 hover:bg-orange-50/80 cursor-pointer transition-colors border-b border-gray-100/50 last:border-0 group"
                         >
                             <img src={product.image} alt={product.name} className="w-10 h-10 object-cover rounded-md ml-3 bg-gray-100" />
                             <div className="flex-1 min-w-0">
@@ -162,7 +162,7 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
                 </div>
               )}
               {showSuggestions && searchQuery && suggestions.length === 0 && (
-                 <div className="absolute top-full right-0 w-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 p-4 text-center text-sm text-gray-500 z-50">
+                 <div className="absolute top-full right-0 w-full mt-2 glass-card rounded-xl shadow-xl border border-white/50 p-4 text-center text-sm text-gray-500 z-50">
                     محصولی یافت نشد
                  </div>
               )}
@@ -174,7 +174,7 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
             >
               <ShoppingCart size={24} />
               {cartCount > 0 && (
-                <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md">
                   {cartCount}
                 </span>
               )}
@@ -185,7 +185,7 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
               className={`p-2 transition-all duration-200 hover:scale-105 active:scale-95 flex items-center ${user ? 'text-primary' : 'text-gray-600 hover:text-primary'}`}
             >
                 <UserIcon size={24} />
-                {user && <span className="text-xs mr-1 hidden lg:inline">{user.name}</span>}
+                {user && <span className="text-xs mr-1 hidden lg:inline font-medium">{user.name}</span>}
             </button>
           </div>
         </div>
@@ -193,14 +193,14 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
 
       {/* Loading Bar */}
       {isLoading && (
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-orange-100 overflow-hidden">
+        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-orange-100 overflow-hidden">
            <div className="h-full bg-primary animate-subtle-progress"></div>
         </div>
       )}
       
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-t animate-in slide-in-from-top-2 duration-200">
+        <div className="md:hidden glass-card border-t border-white/50 animate-in slide-in-from-top-2 duration-200">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navItems.map((item) => (
               <button
@@ -209,10 +209,10 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
                   onChangeView(item.view);
                   setIsMenuOpen(false);
                 }}
-                className={`flex w-full items-center px-3 py-4 rounded-md text-base font-medium transition-colors active:scale-98 ${
+                className={`flex w-full items-center px-3 py-4 rounded-xl text-base font-medium transition-colors active:scale-98 ${
                     currentView === item.view
-                    ? 'text-primary bg-orange-50'
-                    : 'text-gray-700 hover:text-primary hover:bg-gray-50'
+                    ? 'text-primary bg-orange-50/50'
+                    : 'text-gray-700 hover:text-primary hover:bg-white/40'
                 }`}
               >
                  {item.icon && <item.icon size={20} className="ml-2" />}

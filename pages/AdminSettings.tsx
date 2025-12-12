@@ -135,12 +135,14 @@ const AdminSettings: React.FC = () => {
                                         </label>
                                         <div className="bg-blue-50 text-blue-800 text-xs px-2 py-1.5 rounded-lg mb-2 flex items-center">
                                             <ImageIcon size={12} className="ml-1" />
-                                            ابعاد: ۱۹۲۰ × ۶۰۰ پیکسل
+                                            حداکثر ۱۹۲۰ پیکسل (افقی)
                                         </div>
                                         <ImageUploader 
                                             currentImage={slide.image} 
                                             onImageSelect={(base64) => updateSlide(slide.id, 'image', base64)} 
                                             className="h-48"
+                                            maxWidth={1920}
+                                            maxHeight={800}
                                         />
                                         {!slide.image && (
                                             <div className="flex items-center text-red-500 text-xs mt-2">

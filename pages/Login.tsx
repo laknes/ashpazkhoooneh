@@ -21,7 +21,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
   const [password, setPassword] = useState('');
   
   // Registration State
-  const [regName, setRegName] = useState('');
+  const [regFirstName, setRegFirstName] = useState('');
+  const [regLastName, setRegLastName] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regProvince, setRegProvince] = useState('');
@@ -95,10 +96,16 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
   const validateRegistration = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!regName.trim()) {
-        newErrors.name = 'نام و نام خانوادگی الزامی است';
-    } else if (!VALIDATION_REGEX.PERSIAN_NAME.test(regName)) {
-        newErrors.name = 'نام باید فقط شامل حروف فارسی باشد';
+    if (!regFirstName.trim()) {
+        newErrors.firstName = 'نام الزامی است';
+    } else if (!VALIDATION_REGEX.PERSIAN_NAME.test(regFirstName)) {
+        newErrors.firstName = 'نام باید فقط شامل حروف فارسی باشد';
+    }
+
+    if (!regLastName.trim()) {
+        newErrors.lastName = 'نام خانوادگی الزامی است';
+    } else if (!VALIDATION_REGEX.PERSIAN_NAME.test(regLastName)) {
+        newErrors.lastName = 'نام خانوادگی باید فقط شامل حروف فارسی باشد';
     }
 
     if (!regPhone.trim()) {
@@ -143,7 +150,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
       }
 
       const newUser = db.users.add({
-          name: regName,
+          name: `${regFirstName} ${regLastName}`,
           phone: regPhone,
           role: 'USER',
           email: regEmail,
@@ -173,16 +180,20 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-8">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-lg border border-gray-100 animate-in fade-in zoom-in-95 duration-300">
+      <div className="glass-card p-8 rounded-3xl shadow-2xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-500 relative overflow-hidden">
         
+        {/* Decorative Background Blur */}
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-orange-300 rounded-full blur-3xl opacity-20 pointer-events-none"></div>
+        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-blue-300 rounded-full blur-3xl opacity-20 pointer-events-none"></div>
+
         {/* Header & Tabs */}
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-black text-gray-800 mb-6">
+        <div className="text-center mb-8 relative z-10">
+          <h2 className="text-2xl font-black text-gray-800 mb-6 drop-shadow-sm">
             {step === 'REGISTER' ? 'تکمیل ثبت نام' : 'ورود به حساب کاربری'}
           </h2>
           
           {step !== 'REGISTER' && (
-              <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
+              <div className="flex bg-white/50 p-1 rounded-xl mb-6 backdrop-blur-sm border border-white/40">
                   <button 
                     onClick={() => { setAuthMethod('OTP'); setErrors({}); setStep('IDENTIFIER'); }}
                     className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${authMethod === 'OTP' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
@@ -211,14 +222,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
 
         {/* OTP Login Form */}
         {authMethod === 'OTP' && step === 'IDENTIFIER' && (
-          <form onSubmit={handleSendOtp} className="space-y-6">
+          <form onSubmit={handleSendOtp} className="space-y-6 relative z-10">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">شماره موبایل یا ایمیل</label>
               <div className="relative">
                 <input
                   type="text"
                   placeholder="0912xxxxxxx یا example@mail.com"
-                  className={`w-full px-4 py-3 rounded-xl border ${errors.identifier ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 text-left dir-ltr`}
+                  className={`w-full px-4 py-3 rounded-xl border ${errors.identifier ? 'border-red-500' : 'border-gray-200'} bg-white/60 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 text-left dir-ltr shadow-sm`}
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                 />
@@ -228,21 +239,21 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
             </div>
             <button
               type="submit"
-              className="w-full bg-primary hover:bg-orange-600 text-white py-3 rounded-xl font-bold transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-1 active:scale-95"
+              className="w-full bg-primary hover:bg-orange-600 text-white py-3 rounded-xl font-bold transition-all duration-200 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-1 active:scale-95"
             >
               ارسال کد تایید
             </button>
             
             <div className="relative flex py-2 items-center">
-                <div className="flex-grow border-t border-gray-200"></div>
+                <div className="flex-grow border-t border-gray-200/50"></div>
                 <span className="flex-shrink-0 mx-4 text-gray-400 text-xs">دسترسی سریع</span>
-                <div className="flex-grow border-t border-gray-200"></div>
+                <div className="flex-grow border-t border-gray-200/50"></div>
             </div>
 
             <button
               type="button"
               onClick={handleAdminDemo}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full bg-white/60 hover:bg-white text-gray-700 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border border-white/50 shadow-sm"
             >
               <ShieldCheck size={18} />
               ورود آزمایشی مدیریت
@@ -252,14 +263,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
 
         {/* Password Login Form */}
         {authMethod === 'PASSWORD' && step === 'IDENTIFIER' && (
-            <form onSubmit={handlePasswordLogin} className="space-y-6">
+            <form onSubmit={handlePasswordLogin} className="space-y-6 relative z-10">
                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">شماره موبایل یا ایمیل</label>
                     <div className="relative">
                         <input
                         type="text"
                         placeholder="0912xxxxxxx"
-                        className={`w-full px-4 py-3 rounded-xl border ${errors.identifier ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 text-left dir-ltr`}
+                        className={`w-full px-4 py-3 rounded-xl border ${errors.identifier ? 'border-red-500' : 'border-gray-200'} bg-white/60 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 text-left dir-ltr shadow-sm`}
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
                         />
@@ -273,7 +284,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
                         <input
                         type="password"
                         placeholder="••••••••"
-                        className={`w-full px-4 py-3 rounded-xl border ${errors.password ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 dir-ltr`}
+                        className={`w-full px-4 py-3 rounded-xl border ${errors.password ? 'border-red-500' : 'border-gray-200'} bg-white/60 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 dir-ltr shadow-sm`}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         />
@@ -283,21 +294,21 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
                 </div>
                 <button
                     type="submit"
-                    className="w-full bg-primary hover:bg-orange-600 text-white py-3 rounded-xl font-bold transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-1 active:scale-95"
+                    className="w-full bg-primary hover:bg-orange-600 text-white py-3 rounded-xl font-bold transition-all duration-200 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-1 active:scale-95"
                 >
                     ورود
                 </button>
 
                 <div className="relative flex py-2 items-center">
-                    <div className="flex-grow border-t border-gray-200"></div>
+                    <div className="flex-grow border-t border-gray-200/50"></div>
                     <span className="flex-shrink-0 mx-4 text-gray-400 text-xs">دسترسی سریع</span>
-                    <div className="flex-grow border-t border-gray-200"></div>
+                    <div className="flex-grow border-t border-gray-200/50"></div>
                 </div>
 
                 <button
                 type="button"
                 onClick={handleAdminDemo}
-                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                className="w-full bg-white/60 hover:bg-white text-gray-700 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border border-white/50 shadow-sm"
                 >
                 <ShieldCheck size={18} />
                 ورود آزمایشی مدیریت
@@ -307,14 +318,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
 
         {/* OTP Verification Step */}
         {step === 'OTP' && (
-          <form onSubmit={handleVerifyOtp} className="space-y-6">
+          <form onSubmit={handleVerifyOtp} className="space-y-6 relative z-10">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">کد تایید (۱۲۳۴)</label>
               <div className="relative">
                 <input
                   type="text"
                   placeholder="- - - -"
-                  className={`w-full px-4 py-3 rounded-xl border ${errors.otp ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 text-center tracking-[1em] text-lg font-mono`}
+                  className={`w-full px-4 py-3 rounded-xl border ${errors.otp ? 'border-red-500' : 'border-gray-200'} bg-white/60 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 text-center tracking-[1em] text-lg font-mono shadow-sm`}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
                   maxLength={4}
@@ -322,11 +333,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
                 <Lock className="absolute left-3 top-3.5 text-gray-400" size={20} />
               </div>
               <ErrorMsg field="otp" />
-              <p className="text-xs text-center text-gray-400 mt-2 bg-gray-50 py-1 rounded">کد تایید آزمایشی: <b className="text-gray-700 tracking-widest">1234</b></p>
+              <p className="text-xs text-center text-gray-400 mt-2 bg-white/50 py-1 rounded">کد تایید آزمایشی: <b className="text-gray-700 tracking-widest">1234</b></p>
             </div>
             <button
               type="submit"
-              className="w-full bg-primary hover:bg-orange-600 text-white py-3 rounded-xl font-bold transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-1 active:scale-95"
+              className="w-full bg-primary hover:bg-orange-600 text-white py-3 rounded-xl font-bold transition-all duration-200 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-1 active:scale-95"
             >
               تایید و ادامه
             </button>
@@ -342,28 +353,45 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
 
         {/* Registration Form */}
         {step === 'REGISTER' && (
-            <form onSubmit={handleRegister} className="space-y-4">
+            <form onSubmit={handleRegister} className="space-y-4 relative z-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">نام و نام خانوادگی <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">نام <span className="text-red-500">*</span></label>
                         <div className="relative">
                             <input
                                 type="text"
-                                className={`w-full px-4 py-3 rounded-xl border ${errors.name ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10`}
-                                value={regName}
-                                onChange={(e) => setRegName(e.target.value)}
+                                className={`w-full px-4 py-3 rounded-xl border ${errors.firstName ? 'border-red-500' : 'border-gray-200'} bg-white/60 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 shadow-sm`}
+                                value={regFirstName}
+                                onChange={(e) => setRegFirstName(e.target.value)}
                                 placeholder="فقط حروف فارسی"
                             />
                             <UserIcon className="absolute left-3 top-3.5 text-gray-400" size={20} />
                         </div>
-                        <ErrorMsg field="name" />
+                        <ErrorMsg field="firstName" />
                     </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">نام خانوادگی <span className="text-red-500">*</span></label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                className={`w-full px-4 py-3 rounded-xl border ${errors.lastName ? 'border-red-500' : 'border-gray-200'} bg-white/60 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 shadow-sm`}
+                                value={regLastName}
+                                onChange={(e) => setRegLastName(e.target.value)}
+                                placeholder="فقط حروف فارسی"
+                            />
+                            <UserIcon className="absolute left-3 top-3.5 text-gray-400" size={20} />
+                        </div>
+                        <ErrorMsg field="lastName" />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">شماره موبایل <span className="text-red-500">*</span></label>
                         <div className="relative">
                              <input
                                 type="tel"
-                                className={`w-full px-4 py-3 rounded-xl border ${errors.phone ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 dir-ltr ${loginType === 'PHONE' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                className={`w-full px-4 py-3 rounded-xl border ${errors.phone ? 'border-red-500' : 'border-gray-200'} bg-white/60 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 dir-ltr shadow-sm ${loginType === 'PHONE' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                 value={regPhone}
                                 onChange={(e) => setRegPhone(e.target.value)}
                                 disabled={loginType === 'PHONE'}
@@ -373,15 +401,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
                         </div>
                         <ErrorMsg field="phone" />
                     </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">ایمیل <span className="text-red-500">*</span></label>
                         <div className="relative">
                             <input
                                 type="email"
-                                className={`w-full px-4 py-3 rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 dir-ltr ${loginType === 'EMAIL' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                className={`w-full px-4 py-3 rounded-xl border ${errors.email ? 'border-red-500' : 'border-gray-200'} bg-white/60 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 dir-ltr shadow-sm ${loginType === 'EMAIL' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                 value={regEmail}
                                 onChange={(e) => setRegEmail(e.target.value)}
                                 disabled={loginType === 'EMAIL'}
@@ -390,11 +415,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
                         </div>
                         <ErrorMsg field="email" />
                     </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">استان <span className="text-red-500">*</span></label>
                         <div className="relative">
                             <select
-                                className={`w-full px-4 py-3 rounded-xl border ${errors.province ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 appearance-none bg-white`}
+                                className={`w-full px-4 py-3 rounded-xl border ${errors.province ? 'border-red-500' : 'border-gray-200'} bg-white/60 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 appearance-none shadow-sm`}
                                 value={regProvince}
                                 onChange={handleProvinceChange}
                             >
@@ -405,14 +433,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
                         </div>
                         <ErrorMsg field="province" />
                     </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">شهر <span className="text-red-500">*</span></label>
                         <div className="relative">
                             <select
-                                className={`w-full px-4 py-3 rounded-xl border ${errors.city ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 appearance-none bg-white`}
+                                className={`w-full px-4 py-3 rounded-xl border ${errors.city ? 'border-red-500' : 'border-gray-200'} bg-white/60 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 appearance-none shadow-sm`}
                                 value={regCity}
                                 onChange={(e) => setRegCity(e.target.value)}
                                 disabled={!regProvince}
@@ -424,12 +449,15 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
                         </div>
                         <ErrorMsg field="city" />
                     </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">کد پستی <span className="text-red-500">*</span></label>
                         <div className="relative">
                             <input
                                 type="text"
-                                className={`w-full px-4 py-3 rounded-xl border ${errors.postalCode ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 dir-ltr font-mono`}
+                                className={`w-full px-4 py-3 rounded-xl border ${errors.postalCode ? 'border-red-500' : 'border-gray-200'} bg-white/60 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 dir-ltr font-mono shadow-sm`}
                                 value={regPostalCode}
                                 onChange={(e) => setRegPostalCode(e.target.value)}
                                 maxLength={10}
@@ -445,7 +473,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">آدرس دقیق پستی</label>
                     <textarea
                         rows={2}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white/60 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-colors pl-10 shadow-sm"
                         value={regAddress}
                         onChange={(e) => setRegAddress(e.target.value)}
                         placeholder="خیابان، کوچه، پلاک، واحد..."
@@ -454,7 +482,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
 
                 <button
                     type="submit"
-                    className="w-full bg-primary hover:bg-orange-600 text-white py-3 rounded-xl font-bold transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-1 active:scale-95"
+                    className="w-full bg-primary hover:bg-orange-600 text-white py-3 rounded-xl font-bold transition-all duration-200 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-1 active:scale-95"
                 >
                     تکمیل ثبت نام و ورود
                 </button>
@@ -464,7 +492,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
         {step === 'IDENTIFIER' && (
             <button 
             onClick={onCancel}
-            className="mt-6 flex items-center justify-center w-full text-gray-400 text-sm hover:text-gray-600 transition-all active:scale-95"
+            className="mt-6 flex items-center justify-center w-full text-gray-400 text-sm hover:text-gray-600 transition-all active:scale-95 relative z-10"
             >
             <ArrowLeft size={16} className="ml-1" />
             بازگشت به فروشگاه

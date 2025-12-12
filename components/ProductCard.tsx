@@ -68,17 +68,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <>
-      {/* Main Card Container */}
+      {/* Main Card Container - Glassmorphism */}
       <div 
-        className="group relative flex flex-col h-full bg-white rounded-xl shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer overflow-hidden isolate"
+        className="group relative flex flex-col h-full glass-card rounded-2xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 cursor-pointer overflow-hidden isolate hover:bg-white/80"
         onClick={handleCardClick}
       >
         {/* Image Section */}
-        <div className="relative aspect-square bg-gray-100 overflow-hidden">
+        <div className="relative aspect-square overflow-hidden bg-white/40">
           <img 
             src={product.image} 
             alt={product.name} 
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
           />
           
           {/* Top Left: Wishlist Button */}
@@ -87,7 +87,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 active:scale-90 ${
               isWishlisted 
                 ? 'bg-white text-red-500 opacity-100' 
-                : 'bg-white/90 text-gray-400 hover:text-red-500 hover:bg-white opacity-0 group-hover:opacity-100 translate-y-[-10px] group-hover:translate-y-0'
+                : 'bg-white/80 backdrop-blur-sm text-gray-400 hover:text-red-500 hover:bg-white opacity-0 group-hover:opacity-100 translate-y-[-10px] group-hover:translate-y-0'
             }`}
             title={isWishlisted ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"}
           >
@@ -96,7 +96,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Top Right: Discount Badge */}
           {product.oldPrice && (
-            <div className="absolute top-2 right-2 z-10 bg-[#dc2626] text-white text-base font-bold px-4 py-1.5 rounded-lg shadow-md">
+            <div className="absolute top-2 right-2 z-10 bg-[#dc2626]/90 backdrop-blur-sm text-white text-sm font-bold px-3 py-1 rounded-lg shadow-md">
               تخفیف ویژه
             </div>
           )}
@@ -104,7 +104,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {/* Center: Quick View Button */}
           <button
             onClick={handleQuickViewClick}
-            className="absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 bg-white/90 backdrop-blur-sm text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 hover:bg-white translate-y-4 group-hover:translate-y-[-50%]"
+            className="absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 bg-white/80 backdrop-blur-md text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 hover:bg-white translate-y-4 group-hover:translate-y-[-50%]"
           >
             <Eye size={18} className="text-[#FF6A00]" />
             <span className="text-sm">مشاهده سریع</span>
@@ -113,7 +113,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {/* Bottom Right: Zoom Button */}
           <button
             onClick={handleZoomClick}
-            className="absolute bottom-2 right-2 z-20 p-2 rounded-full bg-white/90 hover:bg-white text-gray-500 hover:text-[#FF6A00] transition-all duration-300 hover:scale-110 shadow-sm opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
+            className="absolute bottom-2 right-2 z-20 p-2 rounded-full bg-white/80 hover:bg-white backdrop-blur-sm text-gray-500 hover:text-[#FF6A00] transition-all duration-300 hover:scale-110 shadow-sm opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
             title="بزرگنمایی تصویر"
           >
             <Maximize2 size={18} />
@@ -121,13 +121,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
         
         {/* Content Section */}
-        <div className="flex flex-col flex-grow p-4 relative z-10 bg-white">
+        <div className="flex flex-col flex-grow p-4 relative z-10">
           {/* Category & Rating */}
           <div className="flex justify-between items-start mb-2">
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+            <span className="text-[10px] md:text-xs text-gray-500 bg-gray-100/80 px-2 py-1 rounded-full backdrop-blur-sm">
               {product.category}
             </span>
-            <div className="flex items-center text-yellow-400 text-xs font-bold">
+            <div className="flex items-center text-yellow-500 text-xs font-bold drop-shadow-sm">
               <span className="text-gray-400 ml-1 text-[10px]">({product.reviews})</span>
               {product.rating} <Star size={12} fill="currentColor" className="mr-1" />
             </div>
@@ -139,7 +139,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </h3>
           
           {/* Footer: Price & Actions */}
-          <div className="flex items-end justify-between mt-auto pt-3 border-t border-gray-50">
+          <div className="flex items-end justify-between mt-auto pt-3 border-t border-gray-100/50">
             <div className="flex flex-col">
               {product.oldPrice && (
                 <span className="text-xs text-gray-400 line-through mb-0.5">
@@ -154,7 +154,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <div className="flex items-center gap-2 relative">
               <button 
                 onClick={handleAddToCart}
-                className="bg-[#FF6A00] hover:bg-orange-600 text-white p-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center relative overflow-hidden z-20"
+                className="bg-[#FF6A00] hover:bg-orange-600 text-white p-2.5 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center relative overflow-hidden z-20"
                 aria-label="افزودن به سبد خرید"
               >
                 <ShoppingCart size={18} />
@@ -187,11 +187,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       {/* Zoom Modal */}
       {showModal && createPortal(
         <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-300"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/60 backdrop-blur-md p-4 animate-in fade-in duration-300"
           onClick={(e) => { e.stopPropagation(); setShowModal(false); }}
         >
           <button 
-            className="absolute top-4 left-4 z-[10000] text-white hover:text-red-500 bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors"
+            className="absolute top-4 left-4 z-[10000] text-white hover:text-red-500 bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors backdrop-blur-lg border border-white/10"
             onClick={(e) => { e.stopPropagation(); setShowModal(false); }}
           >
             <X size={32} />
@@ -199,7 +199,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <img 
             src={product.image} 
             alt={product.name} 
-            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300"
+            className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300"
             onClick={(e) => e.stopPropagation()} 
           />
         </div>,
@@ -209,17 +209,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       {/* Quick View Modal */}
       {showQuickView && createPortal(
         <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/40 backdrop-blur-md p-4 animate-in fade-in duration-200"
           onClick={(e) => { e.stopPropagation(); setShowQuickView(false); }}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-300 overflow-hidden"
+            className="glass-card bg-white/90 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-300 overflow-hidden border border-white/60"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Sticky Close Button */}
             <div className="absolute top-4 left-4 z-50">
               <button 
-                className="bg-white/80 backdrop-blur hover:bg-red-50 text-gray-500 hover:text-red-500 rounded-full p-2 transition-colors shadow-md border border-gray-100"
+                className="bg-white/60 backdrop-blur-md hover:bg-red-50 text-gray-500 hover:text-red-500 rounded-full p-2 transition-colors shadow-md border border-white/50"
                 onClick={() => setShowQuickView(false)}
               >
                 <X size={24} />
@@ -229,11 +229,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <div className="overflow-y-auto custom-scrollbar flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 h-full">
                 {/* Image */}
-                <div className="bg-gray-50 p-8 flex items-center justify-center min-h-[300px]">
+                <div className="bg-white/40 p-8 flex items-center justify-center min-h-[300px]">
                   <img 
                     src={product.image} 
                     alt={product.name} 
-                    className="max-w-full max-h-[400px] object-contain drop-shadow-md mix-blend-multiply"
+                    className="max-w-full max-h-[400px] object-contain drop-shadow-xl mix-blend-multiply"
                   />
                 </div>
 
@@ -241,10 +241,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 <div className="p-6 md:p-8 flex flex-col">
                   <div className="mb-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="bg-orange-100 text-[#FF6A00] text-xs font-bold px-2 py-1 rounded-full">
+                      <span className="bg-orange-100/80 text-[#FF6A00] text-xs font-bold px-2 py-1 rounded-full backdrop-blur-sm">
                         {product.category}
                       </span>
-                      <div className="flex items-center text-yellow-400 text-xs font-bold">
+                      <div className="flex items-center text-yellow-500 text-xs font-bold">
                         <span className="text-gray-500 ml-1">({product.reviews} نظر)</span>
                         {product.rating} <Star size={14} fill="currentColor" className="mr-1" />
                       </div>
@@ -281,13 +281,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t flex gap-3 mt-auto">
+                  <div className="pt-4 border-t border-gray-200/50 flex gap-3 mt-auto">
                     <button 
                       onClick={() => {
                         onAddToCart(product);
                         setShowQuickView(false);
                       }}
-                      className="flex-[2] bg-[#FF6A00] hover:bg-orange-600 text-white py-3 rounded-xl font-bold shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center justify-center"
+                      className="flex-[2] bg-[#FF6A00] hover:bg-orange-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all active:scale-95 flex items-center justify-center"
                     >
                       <ShoppingCart size={20} className="ml-2" />
                       افزودن به سبد
@@ -301,7 +301,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                       className={`flex-none px-4 rounded-xl border transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center ${
                         isWishlisted 
                           ? 'bg-red-50 border-red-200 text-red-500' 
-                          : 'bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200'
+                          : 'bg-white/60 border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200'
                       }`}
                     >
                       <Heart size={22} className={isWishlisted ? 'fill-current' : ''} />

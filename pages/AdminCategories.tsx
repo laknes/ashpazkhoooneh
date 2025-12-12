@@ -110,12 +110,14 @@ const AdminCategories: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">تصویر دسته‌بندی</label>
                 <div className="bg-blue-50 text-blue-800 text-xs px-3 py-2 rounded-lg mb-2 flex items-center">
                     <ImageIcon size={14} className="ml-1" />
-                    ابعاد پیشنهادی: ۲۰۰ × ۲۰۰ پیکسل (مربع)
+                    حداکثر ۴۰۰ پیکسل (بهتر است مربع باشد)
                 </div>
                 <ImageUploader 
                     currentImage={editingCategory.image}
                     onImageSelect={(base64) => setEditingCategory({...editingCategory, image: base64})}
                     className="h-40"
+                    maxWidth={400}
+                    maxHeight={400}
                 />
               </div>
 
