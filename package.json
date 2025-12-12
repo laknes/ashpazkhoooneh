@@ -1,12 +1,14 @@
-
 {
   "name": "ashpazkhoneh",
   "version": "1.0.0",
   "description": "فروشگاه آنلاین لوازم آشپزخانه لوکس",
   "main": "index.tsx",
+  "type": "module",
   "scripts": {
-    "start": "serve -s . -l 3000",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "start": "serve -s dist -l 3000"
   },
   "keywords": [
     "react",
@@ -17,6 +19,17 @@
   "author": "Ashpazkhoneh Team",
   "license": "ISC",
   "dependencies": {
+    "@google/genai": "^0.1.0",
+    "lucide-react": "^0.344.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "serve": "^14.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0"
   }
 }

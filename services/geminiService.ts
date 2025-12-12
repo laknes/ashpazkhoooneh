@@ -1,18 +1,24 @@
-
 import { GoogleGenAI } from "@google/genai";
 
 // Safely access process.env to prevent runtime crashes in browser environments
 const getApiKey = (): string => {
+  // Check for Vite injected environment variable first (via define)
+  // @ts-ignore
+  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+     // @ts-ignore
+     return process.env.API_KEY;
+  }
+  
   try {
     // @ts-ignore
-    if (typeof process !== 'undefined' && process.env) {
-      // @ts-ignore
-      return process.env.API_KEY || '';
+    if (import.meta && import.meta.env && import.meta.env.VITE_API_KEY) {
+        // @ts-ignore
+        return import.meta.env.VITE_API_KEY;
     }
   } catch (e) {
-    // Ignore error if process is undefined
-    console.warn("Could not access process.env");
+    // Ignore
   }
+  
   return '';
 };
 
