@@ -495,7 +495,7 @@ const AdminSettings: React.FC = () => {
                                 <h4 className="font-bold text-[#F38020] mb-2 flex items-center"><CloudLightning size={16} className="ml-1"/> راهنمای اتصال کلودفلر</h4>
                                 <ol className="list-decimal list-inside space-y-1 text-xs">
                                     <li>در پنل Cloudflare دامنه خود را ثبت کنید.</li>
-                                    <li>به بخش <b>SSL/TLS > Origin Server</b> بروید.</li>
+                                    <li>به بخش <b>SSL/TLS &gt; Origin Server</b> بروید.</li>
                                     <li>روی <b>Create Certificate</b> کلیک کنید.</li>
                                     <li>محتوای "Origin Certificate" و "Private Key" تولید شده را در کادرهای زیر کپی کنید.</li>
                                     <li>حالت SSL را در کلودفلر روی <b>Full (Strict)</b> قرار دهید.</li>
