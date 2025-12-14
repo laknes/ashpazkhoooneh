@@ -9,12 +9,17 @@ const AdminOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    setOrders(db.orders.getAll());
+    const fetchOrders = async () => {
+      const data = await db.orders.getAll();
+      setOrders(data);
+    };
+    fetchOrders();
   }, []);
 
-  const handleStatusChange = (id: string, newStatus: OrderStatus) => {
-    db.orders.updateStatus(id, newStatus);
-    setOrders(db.orders.getAll());
+  const handleStatusChange = async (id: string, newStatus: OrderStatus) => {
+    await db.orders.updateStatus(id, newStatus);
+    const data = await db.orders.getAll();
+    setOrders(data);
   };
 
   const getStatusBadge = (status: OrderStatus) => {

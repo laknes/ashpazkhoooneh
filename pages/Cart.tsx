@@ -67,7 +67,7 @@ const Cart: React.FC<CartProps> = ({ cart, onUpdateQuantity, onRemove, onChangeV
         {/* Cart Items - Glassmorphism */}
         <div className="flex-1 space-y-4">
             {cart.map(item => (
-                <div key={item.id} className="bg-white/70 backdrop-blur-lg border border-white/40 p-4 rounded-xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:shadow-md transition-shadow duration-200">
+                <div key={item.id} className="glass-card p-4 rounded-xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:shadow-md transition-shadow duration-200">
                     <div className="flex items-center w-full sm:w-auto gap-4">
                         <img src={item.image} alt={item.name} className="w-20 h-20 md:w-24 md:h-24 object-cover rounded-lg bg-white/40 border border-white/30 flex-shrink-0" />
                         <div className="flex-1 sm:hidden">
@@ -120,7 +120,7 @@ const Cart: React.FC<CartProps> = ({ cart, onUpdateQuantity, onRemove, onChangeV
 
         {/* Summary - Glassmorphism */}
         <div className="w-full lg:w-96">
-            <div className="bg-white/70 backdrop-blur-lg border border-white/40 p-6 rounded-xl shadow-sm sticky top-24">
+            <div className="glass-card p-6 rounded-xl shadow-sm sticky top-24">
                 <h3 className="font-bold text-lg mb-6 border-b border-gray-200/50 pb-4">خلاصه سفارش</h3>
                 
                 <div className="space-y-3 text-sm text-gray-600 mb-6">

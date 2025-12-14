@@ -20,68 +20,56 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Get settings for SEO
-  const settings = db.settings.get();
+  // SEO settings state
+  const [seoSettings, setSeoSettings] = useState({
+      title: 'آشپزخونه',
+      desc: '',
+      keywords: '',
+      url: ''
+  });
 
   useEffect(() => {
-    // Fetch data from DB
-    const allProducts = db.products.getAll();
-    setFeaturedProducts(allProducts.slice(0, 4));
-    setBestSellers(db.products.getBestSellers());
-    setCategories(db.categories.getAll());
-    setHeroSlides(db.settings.get().heroSlides);
+    const fetchData = async () => {
+        try {
+            const allProducts = await db.products.getAll();
+            setFeaturedProducts(allProducts.slice(0, 4));
+            
+            const best = await db.products.getBestSellers();
+            setBestSellers(best);
+            
+            const cats = await db.categories.getAll();
+            setCategories(cats);
+            
+            const settings = await db.settings.get();
+            if (settings) {
+                setHeroSlides(settings.heroSlides || []);
+                setSeoSettings({
+                    title: settings.seo.defaultTitle,
+                    desc: settings.seo.defaultDescription,
+                    keywords: settings.seo.defaultKeywords,
+                    url: settings.seo.siteUrl
+                });
+            }
+        } catch (error) {
+            console.error("Error loading home data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    fetchData();
   }, []);
 
-  // JSON-LD Schema
-  const schema = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "WebSite",
-        "name": "آشپزخونه",
-        "url": settings.seo.siteUrl,
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": `${settings.seo.siteUrl}/?search={search_term_string}`
-          },
-          "query-input": "required name=search_term_string"
-        }
-      },
-      {
-        "@type": "Store",
-        "name": "آشپزخونه",
-        "image": settings.heroSlides[0]?.image || "",
-        "description": settings.seo.defaultDescription,
-        "telephone": settings.contact.phone,
-        "email": settings.contact.email,
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": settings.contact.address,
-          "addressLocality": "تهران",
-          "addressCountry": "IR"
-        },
-        "url": settings.seo.siteUrl,
-        "priceRange": "IRR",
-        "sameAs": [
-          settings.socialMedia.instagram,
-          settings.socialMedia.twitter,
-          settings.socialMedia.linkedin,
-          settings.socialMedia.telegram
-        ].filter(Boolean)
-      }
-    ]
-  };
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
 
   return (
-    <div className="space-y-16 pb-12">
+    <div className="space-y-12 md:space-y-16 pb-12">
       <SEO 
         title="لوازم لوکس خانه و آشپزخانه"
-        description={settings.seo.defaultDescription}
-        keywords={settings.seo.defaultKeywords}
-        jsonLd={schema}
+        description={seoSettings.desc}
+        keywords={seoSettings.keywords}
         type="website"
       />
 
@@ -90,34 +78,34 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
         <HeroSlider slides={heroSlides} onChangeView={onChangeView} />
       </section>
 
-      {/* Features - Glassmorphism */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="flex items-center p-6 bg-white/70 backdrop-blur-lg border border-white/40 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
-                <div className="p-3 bg-orange-100/80 text-primary rounded-full ml-4 backdrop-blur-sm">
-                    <Truck size={32} />
+      {/* Features - Glassmorphism - Responsive Margin */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 md:-mt-8 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+            <div className="flex items-center p-4 md:p-6 glass-card rounded-xl hover:-translate-y-1 hover:shadow-xl transition-all">
+                <div className="p-3 bg-orange-100/80 text-primary rounded-full ml-4 backdrop-blur-sm flex-shrink-0">
+                    <Truck size={28} className="md:w-8 md:h-8" />
                 </div>
                 <div>
-                    <h3 className="font-bold text-lg">ارسال سریع</h3>
-                    <p className="text-gray-500 text-sm">تحویل ۲۴ ساعته در تهران</p>
+                    <h3 className="font-bold text-base md:text-lg">ارسال سریع</h3>
+                    <p className="text-gray-500 text-xs md:text-sm">تحویل ۲۴ ساعته در تهران</p>
                 </div>
             </div>
-            <div className="flex items-center p-6 bg-white/70 backdrop-blur-lg border border-white/40 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
-                <div className="p-3 bg-orange-100/80 text-primary rounded-full ml-4 backdrop-blur-sm">
-                    <ShieldCheck size={32} />
+            <div className="flex items-center p-4 md:p-6 glass-card rounded-xl hover:-translate-y-1 hover:shadow-xl transition-all">
+                <div className="p-3 bg-orange-100/80 text-primary rounded-full ml-4 backdrop-blur-sm flex-shrink-0">
+                    <ShieldCheck size={28} className="md:w-8 md:h-8" />
                 </div>
                 <div>
-                    <h3 className="font-bold text-lg">ضمانت اصالت</h3>
-                    <p className="text-gray-500 text-sm">تضمین بازگشت وجه ۷ روزه</p>
+                    <h3 className="font-bold text-base md:text-lg">ضمانت اصالت</h3>
+                    <p className="text-gray-500 text-xs md:text-sm">تضمین بازگشت وجه ۷ روزه</p>
                 </div>
             </div>
-            <div className="flex items-center p-6 bg-white/70 backdrop-blur-lg border border-white/40 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
-                <div className="p-3 bg-orange-100/80 text-primary rounded-full ml-4 backdrop-blur-sm">
-                    <Clock size={32} />
+            <div className="flex items-center p-4 md:p-6 glass-card rounded-xl hover:-translate-y-1 hover:shadow-xl transition-all">
+                <div className="p-3 bg-orange-100/80 text-primary rounded-full ml-4 backdrop-blur-sm flex-shrink-0">
+                    <Clock size={28} className="md:w-8 md:h-8" />
                 </div>
                 <div>
-                    <h3 className="font-bold text-lg">پشتیبانی ۲۴/۷</h3>
-                    <p className="text-gray-500 text-sm">پاسخگویی در تمام ساعات</p>
+                    <h3 className="font-bold text-base md:text-lg">پشتیبانی ۲۴/۷</h3>
+                    <p className="text-gray-500 text-xs md:text-sm">پاسخگویی در تمام ساعات</p>
                 </div>
             </div>
         </div>
@@ -125,11 +113,11 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
 
       {/* Categories */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-bold mb-8 text-gray-800 border-r-4 border-primary pr-3">دسته‌بندی‌ها</h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+        <h2 className="text-xl md:text-2xl font-bold mb-6 md:mb-8 text-gray-800 border-r-4 border-primary pr-3">دسته‌بندی‌ها</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
             {categories.map(cat => (
                 <div key={cat.id} className="group cursor-pointer flex flex-col items-center">
-                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/50 shadow-md group-hover:shadow-xl group-hover:border-orange-100 transition-all duration-300 mb-3 group-hover:-translate-y-2 bg-white/30 backdrop-blur-sm">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/50 shadow-md group-hover:shadow-xl group-hover:border-orange-100 transition-all duration-300 mb-3 group-hover:-translate-y-2 bg-white/30 backdrop-blur-sm">
                       {cat.image ? (
                         <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
                       ) : (
@@ -138,7 +126,7 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
                         </div>
                       )}
                     </div>
-                    <h3 className="font-bold text-gray-700 group-hover:text-primary transition-colors text-center text-sm md:text-base">{cat.name}</h3>
+                    <h3 className="font-bold text-gray-700 group-hover:text-primary transition-colors text-center text-xs md:text-base">{cat.name}</h3>
                 </div>
             ))}
         </div>
@@ -146,11 +134,11 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
 
       {/* Featured Products */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-end mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 border-r-4 border-primary pr-3">جدیدترین محصولات</h2>
+        <div className="flex justify-between items-end mb-6 md:mb-8">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 border-r-4 border-primary pr-3">جدیدترین محصولات</h2>
             <button 
                 onClick={() => onChangeView('CATALOG')}
-                className="text-primary hover:text-orange-700 font-medium flex items-center group transition-colors"
+                className="text-primary hover:text-orange-700 font-medium flex items-center group transition-colors text-sm md:text-base"
             >
                 مشاهده همه <ArrowLeft size={16} className="mr-1 group-hover:mr-2 transition-all" />
             </button>
@@ -172,16 +160,16 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
       </section>
 
       {/* Best Sellers Section */}
-      <section className="bg-orange-50/50 backdrop-blur-sm py-16 border-y border-orange-100/50">
+      <section className="bg-orange-50/50 backdrop-blur-sm py-12 md:py-16 border-y border-orange-100/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-end mb-8">
                 <div>
-                    <h2 className="text-2xl font-black text-gray-900 border-r-4 border-gray-900 pr-3 mb-2">پرفروش‌ترین‌های ماه</h2>
-                    <p className="text-gray-500 text-sm">محصولاتی که بیشترین رضایت خریداران را داشته‌اند</p>
+                    <h2 className="text-xl md:text-2xl font-black text-gray-900 border-r-4 border-gray-900 pr-3 mb-2">پرفروش‌ترین‌های ماه</h2>
+                    <p className="text-gray-500 text-xs md:text-sm hidden sm:block">محصولاتی که بیشترین رضایت خریداران را داشته‌اند</p>
                 </div>
                 <button 
                     onClick={() => onChangeView('CATALOG')}
-                    className="text-gray-900 hover:text-primary font-medium flex items-center group transition-colors"
+                    className="text-gray-900 hover:text-primary font-medium flex items-center group transition-colors text-sm md:text-base"
                 >
                     مشاهده لیست کامل <ArrowLeft size={16} className="mr-1 group-hover:mr-2 transition-all" />
                 </button>

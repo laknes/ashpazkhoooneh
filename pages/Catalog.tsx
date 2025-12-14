@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Product, Category } from '../types';
 import { db } from '../services/db';
 import { ProductCard } from '../components/ProductCard';
-import { Filter, SlidersHorizontal } from 'lucide-react';
+import { Filter, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface CatalogProps {
   onProductClick: (product: Product) => void;
@@ -18,11 +18,28 @@ const Catalog: React.FC<CatalogProps> = ({ onProductClick, onAddToCart, wishlist
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [priceRange, setPriceRange] = useState<number>(20000000);
   const [sortBy, setSortBy] = useState<string>('newest');
+  const [loading, setLoading] = useState(true);
+  
+  // Mobile filter toggle state
+  const [showFilters, setShowFilters] = useState(false);
 
   // Load data from DB on mount
   useEffect(() => {
-    setProducts(db.products.getAll());
-    setCategories(db.categories.getAll());
+    const loadData = async () => {
+        try {
+            const [prods, cats] = await Promise.all([
+                db.products.getAll(),
+                db.categories.getAll()
+            ]);
+            setProducts(prods);
+            setCategories(cats);
+        } catch (error) {
+            console.error("Failed to load catalog data", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    loadData();
   }, []);
 
   const filteredProducts = useMemo(() => {
@@ -56,13 +73,27 @@ const Catalog: React.FC<CatalogProps> = ({ onProductClick, onAddToCart, wishlist
     return result;
   }, [products, selectedCategory, priceRange, sortBy]);
 
+  if (loading) return <div className="p-20 text-center text-gray-500 flex justify-center"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col md:flex-row gap-8">
         
+        {/* Mobile Filter Toggle Button */}
+        <div className="md:hidden">
+            <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className="w-full glass-card p-3 rounded-xl flex items-center justify-center font-bold text-gray-700 active:scale-95 transition-transform"
+            >
+                <Filter size={18} className="ml-2 text-primary" />
+                {showFilters ? 'پنهان کردن فیلترها' : 'مشاهده فیلترها'}
+                {showFilters ? <ChevronUp size={18} className="mr-2" /> : <ChevronDown size={18} className="mr-2" />}
+            </button>
+        </div>
+
         {/* Sidebar Filters - Glassmorphism */}
-        <div className="w-full md:w-64 space-y-8">
-            <div className="bg-white/70 backdrop-blur-lg border border-white/40 p-6 rounded-xl shadow-sm sticky top-24">
+        <div className={`w-full md:w-64 space-y-8 ${showFilters ? 'block' : 'hidden md:block'}`}>
+            <div className="glass-card p-6 rounded-xl shadow-sm sticky top-24">
                 <div className="flex items-center mb-4 text-gray-800">
                     <Filter size={20} className="ml-2 text-primary" />
                     <h3 className="font-bold text-lg">فیلترها</h3>
@@ -119,16 +150,16 @@ const Catalog: React.FC<CatalogProps> = ({ onProductClick, onAddToCart, wishlist
 
         {/* Product Grid */}
         <div className="flex-1">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white/70 backdrop-blur-lg border border-white/40 p-4 rounded-xl shadow-sm gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 glass-card p-4 rounded-xl shadow-sm gap-4">
                 <span className="text-gray-600 font-medium text-sm">
                     نمایش {filteredProducts.length} محصول
                 </span>
-                <div className="flex items-center">
+                <div className="flex items-center w-full sm:w-auto">
                     <SlidersHorizontal size={18} className="ml-2 text-gray-500" />
                     <select 
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
-                        className="form-select border-none text-sm text-gray-700 focus:ring-0 cursor-pointer bg-transparent outline-none py-1"
+                        className="form-select border-none text-sm text-gray-700 focus:ring-0 cursor-pointer bg-transparent outline-none py-1 w-full sm:w-auto"
                     >
                         <option value="newest">جدیدترین</option>
                         <option value="rating">محبوب‌ترین (امتیاز)</option>

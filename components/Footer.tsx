@@ -10,18 +10,18 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = ({ onChangeView }) => {
   // Initialize settings lazily to avoid layout shift/flicker on mount
-  const [settings, setSettings] = useState<SiteSettings | null>(() => {
-    try {
-      return db.settings.get();
-    } catch (error) {
-      console.error("Failed to load settings:", error);
-      return null;
-    }
-  });
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
 
   useEffect(() => {
-    // Refresh settings on mount to ensure sync (though localStorage is sync)
-    setSettings(db.settings.get());
+    const fetchSettings = async () => {
+      try {
+        const s = await db.settings.get();
+        setSettings(s);
+      } catch (e) {
+        console.error("Failed to load settings:", e);
+      }
+    };
+    fetchSettings();
   }, []);
 
   if (!settings) return null;

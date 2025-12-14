@@ -8,7 +8,15 @@ const Contact: React.FC = () => {
   const [contactInfo, setContactInfo] = useState({ phone: '', email: '', address: '' });
 
   useEffect(() => {
-    setContactInfo(db.settings.get().contact);
+    const fetchSettings = async () => {
+      try {
+        const settings = await db.settings.get();
+        setContactInfo(settings.contact);
+      } catch (error) {
+        console.error("Failed to load contact info", error);
+      }
+    };
+    fetchSettings();
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {

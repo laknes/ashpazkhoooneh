@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { ShoppingCart, Star, Heart, Maximize2, X, Eye, Truck, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Star, Heart, Maximize2, X, Eye, Truck, CheckCircle, ImageOff } from 'lucide-react';
 import { Product } from '../types';
 import { formatPrice } from '../constants';
 
@@ -23,6 +23,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [showModal, setShowModal] = useState(false);
   const [showQuickView, setShowQuickView] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   // Prevent background scroll when modals are open
   useEffect(() => {
@@ -68,11 +69,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   // Helper to optimize image URLs (especially for Unsplash)
   const getOptimizedImageUrl = (url: string, width = 400) => {
-    if (!url) return '';
+    if (!url || imgError) return 'https://placehold.co/400x400/f3f4f6/9ca3af?text=No+Image'; // Fallback
     if (url.includes('images.unsplash.com')) {
       const separator = url.includes('?') ? '&' : '?';
-      // Ensure we request WebP (auto=format usually does this based on Accept header)
-      // and resize to the needed width to save bandwidth
       let newUrl = url;
       if (!newUrl.includes('auto=format')) newUrl += `${separator}auto=format`;
       if (!newUrl.includes('q=')) newUrl += `&q=80`;
@@ -86,31 +85,40 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <>
-      {/* Main Card Container - Glassmorphism using Tailwind */}
+      {/* Main Card Container - Using standardized glass-card class */}
       <div 
-        className="group relative flex flex-col h-full bg-white/70 backdrop-blur-xl border border-white/50 rounded-2xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 cursor-pointer overflow-hidden isolate hover:bg-white/80 shadow-sm"
+        className="group relative flex flex-col h-full glass-card rounded-2xl cursor-pointer overflow-hidden isolate hover:shadow-2xl hover:-translate-y-1"
         onClick={handleCardClick}
       >
         {/* Image Section */}
-        <div className="relative aspect-square overflow-hidden bg-white/40 p-4">
-          <img 
-            src={displayImage} 
-            alt={product.name} 
-            loading="lazy"
-            decoding="async"
-            width="400"
-            height="400"
-            className="w-full h-full object-contain object-center transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
-          />
+        <div className="relative aspect-square overflow-hidden bg-white/40 p-4 flex items-center justify-center">
+          {imgError ? (
+              <div className="text-gray-300 flex flex-col items-center">
+                  <ImageOff size={48} className="mb-2 opacity-50"/>
+                  <span className="text-xs font-medium">تصویر موجود نیست</span>
+              </div>
+          ) : (
+              <img 
+                src={displayImage} 
+                alt={product.name} 
+                loading="lazy"
+                decoding="async"
+                width="400"
+                height="400"
+                className="w-full h-full object-contain object-center transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
+                onError={() => setImgError(true)}
+              />
+          )}
           
           {/* Top Left: Wishlist Button */}
+          {/* Mobile: Always visible (opacity-100). Desktop: Visible on hover (md:opacity-0 md:group-hover:opacity-100) */}
           <button
             onClick={handleWishlistClick}
-            className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-md transition-all duration-300 hover:scale-110 active:scale-90 ${
-              isWishlisted 
+            className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-md transition-all duration-300 md:hover:scale-110 active:scale-90 
+              ${isWishlisted 
                 ? 'bg-white text-red-500 opacity-100' 
-                : 'bg-white/80 backdrop-blur-sm text-gray-400 hover:text-red-500 hover:bg-white opacity-0 group-hover:opacity-100 translate-y-[-10px] group-hover:translate-y-0'
-            }`}
+                : 'bg-white/80 backdrop-blur-sm text-gray-400 hover:text-red-500 hover:bg-white opacity-100 md:opacity-0 md:group-hover:opacity-100 md:translate-y-[-10px] md:group-hover:translate-y-0'
+              }`}
             title={isWishlisted ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"}
           >
             <Heart size={20} className={isWishlisted ? 'fill-current' : ''} />
@@ -118,15 +126,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Top Right: Discount Badge */}
           {product.oldPrice && (
-            <div className="absolute top-2 right-2 z-10 bg-[#dc2626]/90 backdrop-blur-sm text-white text-sm font-bold px-3 py-1 rounded-lg shadow-md">
+            <div className="absolute top-2 right-2 z-10 bg-[#dc2626]/90 backdrop-blur-sm text-white text-[10px] md:text-sm font-bold px-2 md:px-3 py-1 rounded-lg shadow-md">
               تخفیف ویژه
             </div>
           )}
 
-          {/* Center: Quick View Button */}
+          {/* Center: Quick View Button (Desktop Only mainly, but accessible on touch if clicked carefully, keeping hidden on small mobile to avoid clutter) */}
           <button
             onClick={handleQuickViewClick}
-            className="absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 bg-white/80 backdrop-blur-md text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 hover:bg-white translate-y-4 group-hover:translate-y-[-50%]"
+            className="hidden md:flex absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2 items-center gap-2 bg-white/80 backdrop-blur-md text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 hover:bg-white translate-y-4 group-hover:translate-y-[-50%]"
           >
             <Eye size={18} className="text-[#FF6A00]" />
             <span className="text-sm">مشاهده سریع</span>
@@ -135,7 +143,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {/* Bottom Right: Zoom Button */}
           <button
             onClick={handleZoomClick}
-            className="absolute bottom-2 right-2 z-20 p-2 rounded-full bg-white/80 hover:bg-white backdrop-blur-sm text-gray-500 hover:text-[#FF6A00] transition-all duration-300 hover:scale-110 shadow-sm opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
+            className="absolute bottom-2 right-2 z-20 p-2 rounded-full bg-white/80 hover:bg-white backdrop-blur-sm text-gray-500 hover:text-[#FF6A00] transition-all duration-300 md:hover:scale-110 shadow-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 md:translate-y-2 md:group-hover:translate-y-0"
             title="بزرگنمایی تصویر"
           >
             <Maximize2 size={18} />
@@ -164,11 +172,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div className="flex items-end justify-between mt-auto pt-3 border-t border-gray-200/50">
             <div className="flex flex-col">
               {product.oldPrice && (
-                <span className="text-xs text-gray-400 line-through mb-0.5">
+                <span className="text-[10px] md:text-xs text-gray-400 line-through mb-0.5">
                   {formatPrice(product.oldPrice)}
                 </span>
               )}
-              <span className="text-base md:text-lg font-black text-gray-900">
+              <span className="text-sm md:text-lg font-black text-gray-900">
                 {formatPrice(product.price)}
               </span>
             </div>
@@ -176,7 +184,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <div className="flex items-center gap-2 relative">
               <button 
                 onClick={handleAddToCart}
-                className="bg-[#FF6A00] hover:bg-orange-600 text-white p-2.5 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center relative overflow-hidden z-20"
+                className="bg-[#FF6A00] hover:bg-orange-600 text-white p-2 md:p-2.5 rounded-xl shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center relative overflow-hidden z-20"
                 aria-label="افزودن به سبد خرید"
               >
                 <ShoppingCart size={18} />
@@ -224,6 +232,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             loading="lazy"
             className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300"
             onClick={(e) => e.stopPropagation()} 
+            onError={(e) => {
+               e.currentTarget.src = "https://placehold.co/800x800/f3f4f6/9ca3af?text=Image+Not+Found";
+            }}
           />
         </div>,
         document.body
@@ -236,7 +247,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           onClick={(e) => { e.stopPropagation(); setShowQuickView(false); }}
         >
           <div 
-            className="bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-300 overflow-hidden"
+            className="glass-card rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col relative animate-in zoom-in-95 slide-in-from-bottom-5 duration-300 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Sticky Close Button */}
@@ -258,6 +269,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     alt={product.name} 
                     loading="lazy"
                     className="max-w-full max-h-[400px] object-contain drop-shadow-xl mix-blend-multiply"
+                    onError={(e) => {
+                        e.currentTarget.src = "https://placehold.co/600x400/f3f4f6/9ca3af?text=No+Image";
+                    }}
                   />
                 </div>
 
@@ -341,4 +355,3 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     </>
   );
 };
-    

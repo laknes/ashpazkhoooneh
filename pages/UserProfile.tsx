@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Order } from '../types';
 import { db } from '../services/db';
 import { formatPrice, PROVINCES, getCitiesForProvince, VALIDATION_REGEX } from '../constants';
@@ -17,6 +17,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout, onUpdateUser,
   const [activeTab, setActiveTab] = useState<'ORDERS' | 'PROFILE'>('ORDERS');
   const [isEditing, setIsEditing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null); // For Invoice Modal
+  const [orders, setOrders] = useState<Order[]>([]);
   
   // Edit Profile State
   const [editName, setEditName] = useState(user.name);
@@ -29,8 +30,17 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout, onUpdateUser,
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Mock orders
-  const orders = db.orders.getAll().slice(0, 3); 
+  useEffect(() => {
+     const fetchOrders = async () => {
+         try {
+             const allOrders = await db.orders.getAll();
+             setOrders(allOrders.slice(0, 3));
+         } catch (error) {
+             console.error("Failed to fetch orders", error);
+         }
+     };
+     fetchOrders();
+  }, []);
 
   const validateProfile = (): boolean => {
       const newErrors: Record<string, string> = {};
@@ -57,7 +67,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout, onUpdateUser,
       return Object.keys(newErrors).length === 0;
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateProfile()) {
@@ -78,7 +88,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout, onUpdateUser,
         updates.password = editPassword;
     }
 
-    const updatedUser = db.users.update(user.id, updates);
+    const updatedUser = await db.users.update(user.id, updates);
 
     if (updatedUser && onUpdateUser) {
         onUpdateUser(updatedUser);

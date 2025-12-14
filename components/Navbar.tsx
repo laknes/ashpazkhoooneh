@@ -54,18 +54,23 @@ const Navbar: React.FC<NavbarProps> = ({ cart, currentView, user, onChangeView, 
     };
   }, []);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
 
     if (query.trim().length > 0) {
-      const allProducts = db.products.getAll();
-      const filtered = allProducts.filter(p => 
-        p.name.toLowerCase().includes(query.toLowerCase()) || 
-        p.category.includes(query)
-      );
-      setSuggestions(filtered.slice(0, 5));
-      setShowSuggestions(true);
+      try {
+        const allProducts = await db.products.getAll();
+        const filtered = allProducts.filter(p => 
+          p.name.toLowerCase().includes(query.toLowerCase()) || 
+          p.category.includes(query)
+        );
+        setSuggestions(filtered.slice(0, 5));
+        setShowSuggestions(true);
+      } catch (error) {
+        console.error("Error searching products", error);
+        setSuggestions([]);
+      }
     } else {
       setSuggestions([]);
       setShowSuggestions(false);

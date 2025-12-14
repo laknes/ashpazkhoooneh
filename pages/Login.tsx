@@ -52,11 +52,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
     }
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otp === '1234') { // Mock OTP
       // Check if user exists by identifier (phone OR email)
-      const existingUser = db.users.findByLogin(identifier);
+      const existingUser = await db.users.findByLogin(identifier);
       
       if (existingUser) {
           // User exists, login
@@ -70,11 +70,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
     }
   };
 
-  const handlePasswordLogin = (e: React.FormEvent) => {
+  const handlePasswordLogin = async (e: React.FormEvent) => {
       e.preventDefault();
       setErrors({});
       
-      const user = db.users.findByLogin(identifier);
+      const user = await db.users.findByLogin(identifier);
       if (user) {
           if (user.password === password) {
               onLogin(user);
@@ -133,7 +133,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
       e.preventDefault();
       
       if (!validateRegistration()) {
@@ -142,14 +142,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
 
       // Check for conflicts if user entered a phone/email that belongs to ANOTHER user during registration
       // (Edge case: Logged in with email, but entered a phone number already in DB)
-      const conflictUser = db.users.findByLogin(loginType === 'EMAIL' ? regPhone : regEmail);
+      const conflictUser = await db.users.findByLogin(loginType === 'EMAIL' ? regPhone : regEmail);
       if (conflictUser) {
            if (loginType === 'EMAIL') setErrors({ phone: 'این شماره موبایل قبلاً ثبت شده است' });
            else setErrors({ email: 'این ایمیل قبلاً ثبت شده است' });
            return;
       }
 
-      const newUser = db.users.add({
+      const newUser = await db.users.add({
           name: `${regFirstName} ${regLastName}`,
           phone: regPhone,
           role: 'USER',

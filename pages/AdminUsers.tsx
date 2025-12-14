@@ -16,21 +16,22 @@ const AdminUsers: React.FC = () => {
     refreshUsers();
   }, []);
 
-  const refreshUsers = () => {
-    setUsers(db.users.getAll());
+  const refreshUsers = async () => {
+    const data = await db.users.getAll();
+    setUsers(data);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm('آیا از حذف این کاربر اطمینان دارید؟')) {
-      db.users.delete(id);
+      await db.users.delete(id);
       refreshUsers();
     }
   };
 
-  const handleToggleRole = (user: User) => {
+  const handleToggleRole = async (user: User) => {
     const newRole = user.role === 'ADMIN' ? 'USER' : 'ADMIN';
     if (confirm(`آیا مطمئن هستید که می‌خواهید نقش کاربر ${user.name} را به ${newRole === 'ADMIN' ? 'مدیر' : 'کاربر عادی'} تغییر دهید؟`)) {
-      db.users.updateRole(user.id, newRole);
+      await db.users.updateRole(user.id, newRole);
       refreshUsers();
     }
   };
@@ -81,14 +82,14 @@ const AdminUsers: React.FC = () => {
       return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!validate()) return;
 
       if (editingUser.id) {
-          db.users.update(editingUser.id, editingUser);
+          await db.users.update(editingUser.id, editingUser);
       } else {
-          db.users.add(editingUser as Omit<User, 'id'>);
+          await db.users.add(editingUser as Omit<User, 'id'>);
       }
       setIsModalOpen(false);
       refreshUsers();

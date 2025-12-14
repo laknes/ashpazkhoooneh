@@ -14,10 +14,18 @@ const AdminSettings: React.FC = () => {
   const keyInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setSettings(db.settings.get());
+    const fetchSettings = async () => {
+      try {
+        const s = await db.settings.get();
+        setSettings(s);
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      }
+    };
+    fetchSettings();
   }, []);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (settings) {
       // Validation: Check if all slides have images
@@ -27,7 +35,7 @@ const AdminSettings: React.FC = () => {
           return;
       }
 
-      db.settings.update(settings);
+      await db.settings.update(settings);
       alert('تنظیمات با موفقیت ذخیره شد.');
     }
   };

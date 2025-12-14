@@ -7,7 +7,15 @@ const About: React.FC = () => {
   const [aboutText, setAboutText] = useState('');
 
   useEffect(() => {
-    setAboutText(db.settings.get().aboutText);
+    const fetchSettings = async () => {
+      try {
+        const settings = await db.settings.get();
+        setAboutText(settings.aboutText);
+      } catch (error) {
+        console.error("Failed to load about text", error);
+      }
+    };
+    fetchSettings();
   }, []);
 
   return (

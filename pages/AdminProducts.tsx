@@ -16,13 +16,14 @@ const AdminProducts: React.FC = () => {
     refreshProducts();
   }, []);
 
-  const refreshProducts = () => {
-    setProducts(db.products.getAll());
+  const refreshProducts = async () => {
+    const data = await db.products.getAll();
+    setProducts(data);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm('آیا از حذف این محصول اطمینان دارید؟')) {
-      db.products.delete(id);
+      await db.products.delete(id);
       refreshProducts();
     }
   };
@@ -50,7 +51,7 @@ const AdminProducts: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct.image) {
         alert('لطفا تصویری برای محصول انتخاب کنید.');
@@ -58,9 +59,9 @@ const AdminProducts: React.FC = () => {
     }
 
     if (editingProduct.id) {
-        db.products.update(editingProduct.id, editingProduct);
+        await db.products.update(editingProduct.id, editingProduct);
     } else {
-        db.products.add(editingProduct as Omit<Product, 'id'>);
+        await db.products.add(editingProduct as Omit<Product, 'id'>);
     }
     setIsModalOpen(false);
     refreshProducts();

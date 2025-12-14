@@ -14,13 +14,14 @@ const AdminCategories: React.FC = () => {
     refreshCategories();
   }, []);
 
-  const refreshCategories = () => {
-    setCategories(db.categories.getAll());
+  const refreshCategories = async () => {
+    const data = await db.categories.getAll();
+    setCategories(data);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm('آیا از حذف این دسته‌بندی اطمینان دارید؟ توجه داشته باشید که محصولات این دسته حذف نخواهند شد.')) {
-      db.categories.delete(id);
+      await db.categories.delete(id);
       refreshCategories();
     }
   };
@@ -35,16 +36,16 @@ const AdminCategories: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCategory.image) {
         alert('لطفاً یک تصویر برای دسته‌بندی انتخاب کنید.');
         return;
     }
     if (editingCategory.id) {
-      db.categories.update(editingCategory.id, editingCategory);
+      await db.categories.update(editingCategory.id, editingCategory);
     } else {
-      db.categories.add(editingCategory as Omit<Category, 'id'>);
+      await db.categories.add(editingCategory as Omit<Category, 'id'>);
     }
     setIsModalOpen(false);
     refreshCategories();

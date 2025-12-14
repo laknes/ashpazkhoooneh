@@ -40,6 +40,28 @@ const App: React.FC = () => {
     setWishlist(db.wishlist.get());
   }, []);
 
+  // Heartbeat for Active Users Tracking
+  useEffect(() => {
+    // Get or create a session ID
+    let sessionId = sessionStorage.getItem('ashpazkhoneh_session_id');
+    if (!sessionId) {
+      sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      sessionStorage.setItem('ashpazkhoneh_session_id', sessionId);
+    }
+
+    const sendHeartbeat = () => {
+      if (sessionId) db.system.sendHeartbeat(sessionId);
+    };
+
+    // Send immediately
+    sendHeartbeat();
+
+    // Send every 30 seconds
+    const interval = setInterval(sendHeartbeat, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const toggleWishlist = (productId: number) => {
     const updatedWishlist = db.wishlist.toggle(productId);
     setWishlist(updatedWishlist);

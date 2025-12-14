@@ -14,13 +14,14 @@ const AdminBlog: React.FC = () => {
     refreshPosts();
   }, []);
 
-  const refreshPosts = () => {
-    setPosts(db.posts.getAll());
+  const refreshPosts = async () => {
+    const data = await db.posts.getAll();
+    setPosts(data);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm('آیا از حذف این مقاله اطمینان دارید؟')) {
-      db.posts.delete(id);
+      await db.posts.delete(id);
       refreshPosts();
     }
   };
@@ -44,12 +45,12 @@ const AdminBlog: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingPost.id) {
-      db.posts.update(editingPost.id, editingPost);
+      await db.posts.update(editingPost.id, editingPost);
     } else {
-      db.posts.add(editingPost as Omit<BlogPost, 'id'>);
+      await db.posts.add(editingPost as Omit<BlogPost, 'id'>);
     }
     setIsModalOpen(false);
     refreshPosts();

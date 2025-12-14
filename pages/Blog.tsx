@@ -8,7 +8,15 @@ const Blog: React.FC = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
 
   useEffect(() => {
-    setPosts(db.posts.getAll());
+    const fetchPosts = async () => {
+      try {
+        const data = await db.posts.getAll();
+        setPosts(data);
+      } catch (error) {
+        console.error("Failed to load blog posts", error);
+      }
+    };
+    fetchPosts();
   }, []);
 
   return (

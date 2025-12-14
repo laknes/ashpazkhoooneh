@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { db } from '../services/db';
 
 interface SEOProps {
@@ -21,20 +21,35 @@ const SEO: React.FC<SEOProps> = ({
   type = 'website',
   jsonLd 
 }) => {
-  const settings = db.settings.get().seo;
-
-  // Construct Final Title
-  const siteTitle = title 
-    ? settings.titleTemplate.replace('%s', title) 
-    : settings.defaultTitle;
-
-  const metaDescription = description || settings.defaultDescription;
-  const metaKeywords = keywords || settings.defaultKeywords;
-  const siteUrl = settings.siteUrl || window.location.origin;
-  const currentUrl = url ? `${siteUrl}${url}` : window.location.href;
-  const metaImage = image || `${siteUrl}/logo.png`; // Fallback image if available
+  const [settings, setSettings] = useState<any>(null);
 
   useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await db.settings.get();
+        setSettings(data.seo);
+      } catch (error) {
+        // Fallback or ignore
+        console.error("Failed to load SEO settings", error);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  useEffect(() => {
+    if (!settings) return;
+
+    // Construct Final Title
+    const siteTitle = title 
+      ? settings.titleTemplate.replace('%s', title) 
+      : settings.defaultTitle;
+
+    const metaDescription = description || settings.defaultDescription;
+    const metaKeywords = keywords || settings.defaultKeywords;
+    const siteUrl = settings.siteUrl || window.location.origin;
+    const currentUrl = url ? `${siteUrl}${url}` : window.location.href;
+    const metaImage = image || `${siteUrl}/logo.png`; // Fallback image if available
+
     // Update Title
     document.title = siteTitle;
 
@@ -86,7 +101,7 @@ const SEO: React.FC<SEOProps> = ({
         }
     }
 
-  }, [siteTitle, metaDescription, metaKeywords, metaImage, currentUrl, type, jsonLd]);
+  }, [settings, title, description, keywords, image, url, type, jsonLd]);
 
   return null; // This component doesn't render anything visible
 };

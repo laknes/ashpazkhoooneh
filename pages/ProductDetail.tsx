@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, Star, ShoppingCart, Truck, Shield, Sparkles } from 'lucide-react';
 import { Product } from '../types';
 import { formatPrice } from '../constants';
@@ -30,6 +30,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
   const [activeTab, setActiveTab] = useState<'desc' | 'features'>('desc');
   const [aiAdvice, setAiAdvice] = useState<string>('');
   const [loadingAi, setLoadingAi] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
   const handleAskAi = async () => {
     setLoadingAi(true);
@@ -50,11 +51,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
     }
   };
 
-  const relatedProducts = useMemo(() => {
-    const allProducts = db.products.getAll();
-    return allProducts
-      .filter(p => p.category === product.category && p.id !== product.id)
-      .slice(0, 4);
+  useEffect(() => {
+    const fetchRelated = async () => {
+      try {
+        const allProducts = await db.products.getAll();
+        const related = allProducts
+          .filter(p => p.category === product.category && p.id !== product.id)
+          .slice(0, 4);
+        setRelatedProducts(related);
+      } catch (error) {
+        console.error("Error fetching related products", error);
+      }
+    };
+    fetchRelated();
   }, [product]);
 
   // JSON-LD Schema for Product
@@ -105,7 +114,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
       </button>
 
       {/* Main Glassmorphism Container */}
-      <div className="bg-white/70 backdrop-blur-xl border border-white/50 rounded-2xl shadow-sm overflow-hidden mb-12">
+      <div className="glass-card rounded-2xl shadow-sm overflow-hidden mb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-8">
             {/* Image Section */}
             <div className="p-4 md:p-8 flex items-center justify-center bg-white/40">
