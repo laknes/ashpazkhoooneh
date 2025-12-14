@@ -105,7 +105,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 decoding="async"
                 width="400"
                 height="400"
-                className="w-full h-full object-contain object-center transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
+                className="w-full h-full object-contain object-center transition-transform duration-700 group-hover:scale-105 mix-blend-multiply"
                 onError={() => setImgError(true)}
               />
           )}
