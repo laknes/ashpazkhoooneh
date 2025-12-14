@@ -18,7 +18,8 @@ const SEED_DATA = {
         shipping: { baseCost: 150000, freeThreshold: 5000000, apiToken: '' },
         seo: { defaultTitle: 'آشپزخونه', titleTemplate: '%s | آشپزخونه', defaultDescription: '', defaultKeywords: '', siteUrl: 'https://ashpazkhoneh.ir' },
         ssl: { enabled: false, provider: 'manual', certCrt: '', privateKey: '' },
-        aboutText: 'فروشگاه اینترنتی آشپزخونه...'
+        aboutText: 'فروشگاه اینترنتی آشپزخونه...',
+        showAdminDemo: true // Default to showing admin demo button
     }
 };
 

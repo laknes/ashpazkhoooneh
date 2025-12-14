@@ -102,6 +102,13 @@ export interface SslConfig {
   chain?: string;
 }
 
+export interface CloudinaryConfig {
+  enabled: boolean;
+  cloudName: string;
+  apiKey: string;
+  apiSecret: string;
+}
+
 export interface SiteSettings {
   heroSlides: HeroSlide[];
   contact: {
@@ -121,7 +128,9 @@ export interface SiteSettings {
   shipping: ShippingConfig;
   seo: SeoConfig;
   ssl: SslConfig;
+  cloudinary?: CloudinaryConfig; // Added Cloudinary
   aboutText: string;
+  showAdminDemo?: boolean; // Control visibility of admin demo button
 }
 
 export interface Review {

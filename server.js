@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { v2 as cloudinary } from 'cloudinary';
 
 // Constants for initial seeding (Moved from db.ts/constants.ts conceptually)
 const INITIAL_DATA = {
@@ -181,6 +182,61 @@ app.post('/api/settings', (req, res) => {
   saveDb(db);
   res.json(db.settings);
 });
+
+// Cloudinary
+app.post('/api/upload', async (req, res) => {
+    const db = getDb();
+    const config = db.settings?.cloudinary;
+
+    // Check if Cloudinary is enabled and configured
+    if (!config || !config.enabled || !config.cloudName || !config.apiKey || !config.apiSecret) {
+        return res.status(400).json({ error: 'Cloudinary not configured' });
+    }
+
+    try {
+        cloudinary.config({
+            cloud_name: config.cloudName,
+            api_key: config.apiKey,
+            api_secret: config.apiSecret
+        });
+
+        const fileStr = req.body.image; // Expecting base64 string
+        if (!fileStr) {
+            return res.status(400).json({ error: 'No image data provided' });
+        }
+
+        const uploadResponse = await cloudinary.uploader.upload(fileStr, {
+            folder: 'ashpazkhoneh'
+        });
+        
+        res.json({ url: uploadResponse.secure_url });
+    } catch (err) {
+        console.error("Cloudinary Upload Error:", err);
+        res.status(500).json({ error: 'Upload failed', details: err.message });
+    }
+});
+
+app.post('/api/test-cloudinary', async (req, res) => {
+    const { cloudName, apiKey, apiSecret } = req.body;
+
+    if (!cloudName || !apiKey || !apiSecret) {
+        return res.status(400).json({ error: 'Missing credentials' });
+    }
+
+    try {
+        cloudinary.config({
+            cloud_name: cloudName,
+            api_key: apiKey,
+            api_secret: apiSecret
+        });
+
+        const result = await cloudinary.api.ping();
+        res.json({ success: true, result });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 
 // Users & Auth (Simplified)
 app.get('/api/users', (req, res) => {

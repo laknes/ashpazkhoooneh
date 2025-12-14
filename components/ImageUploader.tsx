@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Image as ImageIcon, Upload, X, Loader2, Link as LinkIcon, AlertTriangle } from 'lucide-react';
+import { Image as ImageIcon, Upload, X, Loader2, Link as LinkIcon, AlertTriangle, Cloud } from 'lucide-react';
 
 interface ImageUploaderProps {
   currentImage?: string;
@@ -95,8 +95,29 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
       setIsProcessing(true);
       try {
+        // 1. Resize Client-Side first to save bandwidth
         const resizedImage = await resizeImage(file);
-        onImageSelect(resizedImage);
+        
+        // 2. Try to upload to server (which handles Cloudinary)
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: resizedImage })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                onImageSelect(data.url); // Use Cloud URL
+            } else {
+                // If 400 (not configured) or error, fallback to base64
+                // console.warn("Cloud upload skipped/failed, using local base64");
+                onImageSelect(resizedImage); 
+            }
+        } catch (uploadError) {
+            // Network error etc, fallback
+            onImageSelect(resizedImage);
+        }
       } catch (error) {
         console.error("Image processing error:", error);
         alert('خطا در پردازش تصویر.');
@@ -205,16 +226,16 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                         <div className="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm z-10">
                             <div className="flex flex-col items-center text-primary">
                                 <Loader2 size={24} className="animate-spin mb-2" />
-                                <span className="text-xs font-bold">بهینه‌سازی...</span>
+                                <span className="text-xs font-bold">آپلود و بهینه‌سازی...</span>
                             </div>
                         </div>
                     )}
                 </div>
                 
-                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
-                    <AlertTriangle size={14} className="text-yellow-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-[10px] text-yellow-700 leading-tight text-justify">
-                        <b>توجه مهم:</b> تصاویر آپلود شده به صورت فایل فقط در <u>همین مرورگر</u> ذخیره می‌شوند. برای اینکه تصویر برای همه کاربران در اینترنت قابل مشاهده باشد، لطفاً تصویر را در یک هاست آپلود کرده و از تب <b>"لینک مستقیم"</b> استفاده کنید.
+                {/* Info Text about storage */}
+                <div className="mt-2 flex items-start gap-1">
+                     <p className="text-[10px] text-gray-400 leading-tight">
+                        * اگر Cloudinary فعال باشد، تصویر به صورت خودکار در فضای ابری ذخیره می‌شود. در غیر این صورت به صورت Local Base64 ذخیره خواهد شد.
                     </p>
                 </div>
             </div>
@@ -246,6 +267,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                             e.currentTarget.src = "https://placehold.co/600x400/f3f4f6/9ca3af?text=Broken+Image";
                         }}
                     />
+                    {/* Cloud Icon Indicator */}
+                    {currentImage.includes('cloudinary.com') && (
+                        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur text-blue-600 p-1 rounded shadow-sm" title="ذخیره شده در فضای ابری">
+                            <Cloud size={14} />
+                        </div>
+                    )}
                 </div>
             </div>
         )}

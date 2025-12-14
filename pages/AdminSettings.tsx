@@ -2,21 +2,29 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../services/db';
 import { SiteSettings, HeroSlide } from '../types';
-import { Save, Plus, Trash2, AlertCircle, Instagram, Twitter, Linkedin, Send, Image as ImageIcon, MessageSquare, CreditCard, Truck, ExternalLink, Search, Lock, Upload, CloudLightning } from 'lucide-react';
+import { Save, Plus, Trash2, AlertCircle, Instagram, Twitter, Linkedin, Send, Image as ImageIcon, MessageSquare, CreditCard, Truck, ExternalLink, Search, Lock, Upload, CloudLightning, Cloud, CheckCircle, XCircle } from 'lucide-react';
 import ImageUploader from '../components/ImageUploader';
 
 const AdminSettings: React.FC = () => {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
-  const [activeTab, setActiveTab] = useState<'GENERAL' | 'SEO' | 'API'>('GENERAL');
+  const [activeTab, setActiveTab] = useState<'GENERAL' | 'SEO' | 'API' | 'CLOUD'>('GENERAL');
   
   // File inputs for SSL
   const certInputRef = useRef<HTMLInputElement>(null);
   const keyInputRef = useRef<HTMLInputElement>(null);
 
+  // Cloudinary Test State
+  const [isTestingCloud, setIsTestingCloud] = useState(false);
+  const [testCloudResult, setTestCloudResult] = useState<'SUCCESS' | 'ERROR' | null>(null);
+
   useEffect(() => {
     const fetchSettings = async () => {
       try {
         const s = await db.settings.get();
+        // Ensure cloudinary config object exists
+        if (!s.cloudinary) {
+            s.cloudinary = { enabled: false, cloudName: '', apiKey: '', apiSecret: '' };
+        }
         setSettings(s);
       } catch (error) {
         console.error("Error loading settings:", error);
@@ -38,6 +46,35 @@ const AdminSettings: React.FC = () => {
       await db.settings.update(settings);
       alert('تنظیمات با موفقیت ذخیره شد.');
     }
+  };
+
+  const handleTestCloudinary = async () => {
+      if (!settings?.cloudinary) return;
+      setIsTestingCloud(true);
+      setTestCloudResult(null);
+
+      try {
+          const res = await fetch('/api/test-cloudinary', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  cloudName: settings.cloudinary.cloudName,
+                  apiKey: settings.cloudinary.apiKey,
+                  apiSecret: settings.cloudinary.apiSecret
+              })
+          });
+          const data = await res.json();
+          if (data.success) {
+              setTestCloudResult('SUCCESS');
+          } else {
+              setTestCloudResult('ERROR');
+              alert(`خطا: ${data.error}`);
+          }
+      } catch (error) {
+          setTestCloudResult('ERROR');
+      } finally {
+          setIsTestingCloud(false);
+      }
   };
 
   const addSlide = () => {
@@ -97,24 +134,31 @@ const AdminSettings: React.FC = () => {
       <h1 className="text-3xl font-bold text-gray-800 mb-6">تنظیمات سایت</h1>
       
       {/* Tabs */}
-      <div className="flex gap-4 mb-8 border-b border-gray-200 pb-1">
+      <div className="flex gap-4 mb-8 border-b border-gray-200 pb-1 overflow-x-auto">
           <button 
             onClick={() => setActiveTab('GENERAL')}
-            className={`pb-3 px-2 font-medium transition-colors ${activeTab === 'GENERAL' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-800'}`}
+            className={`pb-3 px-2 font-medium transition-colors whitespace-nowrap ${activeTab === 'GENERAL' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-800'}`}
           >
               عمومی و اسلایدر
           </button>
           <button 
             onClick={() => setActiveTab('SEO')}
-            className={`pb-3 px-2 font-medium transition-colors ${activeTab === 'SEO' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-800'}`}
+            className={`pb-3 px-2 font-medium transition-colors whitespace-nowrap ${activeTab === 'SEO' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-800'}`}
           >
               سئو و بهینه‌سازی
           </button>
           <button 
             onClick={() => setActiveTab('API')}
-            className={`pb-3 px-2 font-medium transition-colors ${activeTab === 'API' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-800'}`}
+            className={`pb-3 px-2 font-medium transition-colors whitespace-nowrap ${activeTab === 'API' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-800'}`}
           >
               تنظیمات فنی (API & SSL)
+          </button>
+          <button 
+            onClick={() => setActiveTab('CLOUD')}
+            className={`pb-3 px-2 font-medium transition-colors whitespace-nowrap flex items-center ${activeTab === 'CLOUD' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-800'}`}
+          >
+              <Cloud size={16} className="ml-1" />
+              فضای ابری (Cloud)
           </button>
       </div>
       
@@ -690,6 +734,86 @@ const AdminSettings: React.FC = () => {
                     </div>
                 </div>
             </div>
+        )}
+
+        {/* CLOUD TAB */}
+        {activeTab === 'CLOUD' && (
+             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex items-center gap-3 border-b pb-4 mb-6">
+                    <div className="bg-blue-100 p-2 rounded-full text-blue-600">
+                        <Cloud size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-800">تنظیمات فضای ابری (Cloudinary)</h2>
+                        <p className="text-sm text-gray-500">ذخیره‌سازی تصاویر در سرور ابری برای کاهش حجم دیتابیس و افزایش سرعت</p>
+                    </div>
+                </div>
+
+                <div className="space-y-6 max-w-2xl">
+                    <div className="flex items-center gap-3 mb-6 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <input 
+                            type="checkbox" 
+                            id="cloudinaryEnabled"
+                            checked={settings.cloudinary?.enabled || false}
+                            onChange={e => setSettings({...settings, cloudinary: {...(settings.cloudinary || {cloudName: '', apiKey: '', apiSecret: ''}), enabled: e.target.checked}})}
+                            className="w-5 h-5 text-primary focus:ring-primary rounded cursor-pointer"
+                        />
+                        <div>
+                            <label htmlFor="cloudinaryEnabled" className="block text-sm font-bold text-gray-800 cursor-pointer">فعال‌سازی آپلود ابری</label>
+                            <p className="text-xs text-gray-500">با فعال‌سازی این گزینه، تصاویر جدید به جای ذخیره در دیتابیس، در Cloudinary ذخیره می‌شوند.</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Cloud Name</label>
+                        <input 
+                            type="text" 
+                            value={settings.cloudinary?.cloudName || ''}
+                            onChange={e => setSettings({...settings, cloudinary: {...(settings.cloudinary || {enabled: false, apiKey: '', apiSecret: ''}), cloudName: e.target.value}})}
+                            className="w-full border rounded-lg p-3 dir-ltr font-mono text-sm"
+                            placeholder="e.g. dyx..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+                        <input 
+                            type="text" 
+                            value={settings.cloudinary?.apiKey || ''}
+                            onChange={e => setSettings({...settings, cloudinary: {...(settings.cloudinary || {enabled: false, cloudName: '', apiSecret: ''}), apiKey: e.target.value}})}
+                            className="w-full border rounded-lg p-3 dir-ltr font-mono text-sm"
+                            placeholder="e.g. 123456789..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">API Secret</label>
+                        <input 
+                            type="password" 
+                            value={settings.cloudinary?.apiSecret || ''}
+                            onChange={e => setSettings({...settings, cloudinary: {...(settings.cloudinary || {enabled: false, cloudName: '', apiKey: ''}), apiSecret: e.target.value}})}
+                            className="w-full border rounded-lg p-3 dir-ltr font-mono text-sm"
+                            placeholder="••••••••••••••"
+                        />
+                    </div>
+
+                    <div className="pt-4 flex items-center gap-4">
+                        <button 
+                            type="button" 
+                            onClick={handleTestCloudinary}
+                            disabled={isTestingCloud}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                                testCloudResult === 'SUCCESS' ? 'bg-green-100 text-green-700' :
+                                testCloudResult === 'ERROR' ? 'bg-red-100 text-red-700' :
+                                'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                            }`}
+                        >
+                            {isTestingCloud ? 'در حال تست...' : 'تست اتصال'}
+                            {testCloudResult === 'SUCCESS' && <CheckCircle size={16} />}
+                            {testCloudResult === 'ERROR' && <XCircle size={16} />}
+                        </button>
+                        {testCloudResult === 'SUCCESS' && <span className="text-xs text-green-600">اتصال با موفقیت برقرار شد.</span>}
+                    </div>
+                </div>
+             </div>
         )}
 
         <button 

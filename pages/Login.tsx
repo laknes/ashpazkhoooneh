@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, ViewState } from '../types';
 import { Smartphone, ArrowLeft, Lock, User as UserIcon, Mail, MapPin, Building, Hash, AlertCircle, ShieldCheck, Key } from 'lucide-react';
 import { db } from '../services/db';
@@ -19,6 +19,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
   const [loginType, setLoginType] = useState<'PHONE' | 'EMAIL'>('PHONE');
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
+  const [showDemoButton, setShowDemoButton] = useState(false);
   
   // Registration State
   const [regFirstName, setRegFirstName] = useState('');
@@ -32,6 +33,21 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
 
   // Validation Errors
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+      const fetchSettings = async () => {
+          try {
+              const settings = await db.settings.get();
+              // Show demo button if showAdminDemo is true or undefined (backward compatibility)
+              if (settings && settings.showAdminDemo !== false) {
+                  setShowDemoButton(true);
+              }
+          } catch (error) {
+              console.error("Error fetching settings:", error);
+          }
+      };
+      fetchSettings();
+  }, []);
 
   const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +76,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
       
       if (existingUser) {
           // User exists, login
+          if (existingUser.role === 'ADMIN') {
+              await disableDemoMode();
+          }
           onLogin(existingUser);
       } else {
           // User does not exist, go to registration
@@ -70,6 +89,17 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
     }
   };
 
+  const disableDemoMode = async () => {
+      try {
+          const settings = await db.settings.get();
+          if (settings.showAdminDemo !== false) {
+              await db.settings.update({ ...settings, showAdminDemo: false });
+          }
+      } catch (e) {
+          console.error("Failed to update settings", e);
+      }
+  };
+
   const handlePasswordLogin = async (e: React.FormEvent) => {
       e.preventDefault();
       setErrors({});
@@ -77,6 +107,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
       const user = await db.users.findByLogin(identifier);
       if (user) {
           if (user.password === password) {
+              if (user.role === 'ADMIN') {
+                  await disableDemoMode();
+              }
               onLogin(user);
           } else {
               setErrors({ password: 'رمز عبور اشتباه است' });
@@ -244,20 +277,24 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
               ارسال کد تایید
             </button>
             
-            <div className="relative flex py-2 items-center">
-                <div className="flex-grow border-t border-gray-200/50"></div>
-                <span className="flex-shrink-0 mx-4 text-gray-400 text-xs">دسترسی سریع</span>
-                <div className="flex-grow border-t border-gray-200/50"></div>
-            </div>
+            {showDemoButton && (
+                <>
+                    <div className="relative flex py-2 items-center">
+                        <div className="flex-grow border-t border-gray-200/50"></div>
+                        <span className="flex-shrink-0 mx-4 text-gray-400 text-xs">دسترسی سریع</span>
+                        <div className="flex-grow border-t border-gray-200/50"></div>
+                    </div>
 
-            <button
-              type="button"
-              onClick={handleAdminDemo}
-              className="w-full bg-white/60 hover:bg-white text-gray-700 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border border-white/50 shadow-sm"
-            >
-              <ShieldCheck size={18} />
-              ورود آزمایشی مدیریت
-            </button>
+                    <button
+                    type="button"
+                    onClick={handleAdminDemo}
+                    className="w-full bg-white/60 hover:bg-white text-gray-700 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border border-white/50 shadow-sm"
+                    >
+                    <ShieldCheck size={18} />
+                    ورود آزمایشی مدیریت
+                    </button>
+                </>
+            )}
           </form>
         )}
 
@@ -299,20 +336,24 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
                     ورود
                 </button>
 
-                <div className="relative flex py-2 items-center">
-                    <div className="flex-grow border-t border-gray-200/50"></div>
-                    <span className="flex-shrink-0 mx-4 text-gray-400 text-xs">دسترسی سریع</span>
-                    <div className="flex-grow border-t border-gray-200/50"></div>
-                </div>
+                {showDemoButton && (
+                    <>
+                        <div className="relative flex py-2 items-center">
+                            <div className="flex-grow border-t border-gray-200/50"></div>
+                            <span className="flex-shrink-0 mx-4 text-gray-400 text-xs">دسترسی سریع</span>
+                            <div className="flex-grow border-t border-gray-200/50"></div>
+                        </div>
 
-                <button
-                type="button"
-                onClick={handleAdminDemo}
-                className="w-full bg-white/60 hover:bg-white text-gray-700 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border border-white/50 shadow-sm"
-                >
-                <ShieldCheck size={18} />
-                ورود آزمایشی مدیریت
-                </button>
+                        <button
+                        type="button"
+                        onClick={handleAdminDemo}
+                        className="w-full bg-white/60 hover:bg-white text-gray-700 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border border-white/50 shadow-sm"
+                        >
+                        <ShieldCheck size={18} />
+                        ورود آزمایشی مدیریت
+                        </button>
+                    </>
+                )}
             </form>
         )}
 
