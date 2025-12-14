@@ -24,6 +24,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [showQuickView, setShowQuickView] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   // Prevent background scroll when modals are open
   useEffect(() => {
@@ -98,16 +99,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   <span className="text-xs font-medium">تصویر موجود نیست</span>
               </div>
           ) : (
-              <img 
-                src={displayImage} 
-                alt={product.name} 
-                loading="lazy"
-                decoding="async"
-                width="400"
-                height="400"
-                className="w-full h-full object-contain object-center transition-transform duration-700 group-hover:scale-105 mix-blend-multiply"
-                onError={() => setImgError(true)}
-              />
+              <>
+                {!isImageLoaded && (
+                  <div className="absolute inset-0 bg-gray-100 animate-pulse m-4 rounded-xl" />
+                )}
+                <img 
+                  src={displayImage} 
+                  alt={product.name} 
+                  loading="lazy"
+                  decoding="async"
+                  width="400"
+                  height="400"
+                  className={`w-full h-full object-contain object-center transition-all duration-700 group-hover:scale-105 mix-blend-multiply ${
+                    isImageLoaded ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-sm scale-95'
+                  }`}
+                  onLoad={() => setIsImageLoaded(true)}
+                  onError={() => setImgError(true)}
+                />
+              </>
           )}
           
           {/* Top Left: Wishlist Button */}

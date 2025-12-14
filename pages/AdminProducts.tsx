@@ -136,174 +136,183 @@ const AdminProducts: React.FC = () => {
         </div>
       </div>
 
-      {/* Edit/Add Modal */}
+      {/* Edit/Add Modal - Sticky Header/Footer Layout */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
-                <div className="p-6 border-b flex justify-between items-center">
-                    <h2 className="text-xl font-bold">{editingProduct.id ? 'ویرایش محصول' : 'افزودن محصول جدید'}</h2>
-                    <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-transform hover:scale-110"><X size={24} /></button>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+                
+                {/* Header */}
+                <div className="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-xl flex-shrink-0">
+                    <h2 className="text-xl font-bold text-gray-800">{editingProduct.id ? 'ویرایش محصول' : 'افزودن محصول جدید'}</h2>
+                    <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-red-500 transition-colors bg-white rounded-full p-1 shadow-sm">
+                        <X size={20} />
+                    </button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    
-                    <div className="flex flex-col md:flex-row gap-6">
-                        {/* Image Upload Column */}
-                        <div className="w-full md:w-1/3">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">تصویر محصول</label>
-                            <div className="bg-blue-50 text-blue-800 text-xs px-2 py-1.5 rounded-lg mb-2 flex items-center">
-                                <ImageIcon size={12} className="ml-1" />
-                                حداکثر ۸۰۰ پیکسل
-                            </div>
-                            <ImageUploader 
-                                currentImage={editingProduct.image}
-                                onImageSelect={(base64) => setEditingProduct({...editingProduct, image: base64})}
-                                maxWidth={800}
-                                maxHeight={800}
-                                quality={0.8}
-                            />
-                        </div>
-
-                        {/* Fields Column */}
-                        <div className="w-full md:w-2/3 space-y-4">
-                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">نام محصول</label>
-                                <input 
-                                    type="text" 
-                                    required
-                                    autoFocus
-                                    value={editingProduct.name}
-                                    onChange={e => setEditingProduct({...editingProduct, name: e.target.value})}
-                                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+                
+                {/* Scrollable Content */}
+                <div className="overflow-y-auto custom-scrollbar flex-1 p-6">
+                    <form id="product-form" onSubmit={handleSubmit} className="space-y-6">
+                        <div className="flex flex-col md:flex-row gap-6">
+                            {/* Image Upload Column */}
+                            <div className="w-full md:w-1/3">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">تصویر محصول</label>
+                                <div className="bg-blue-50 text-blue-800 text-xs px-2 py-1.5 rounded-lg mb-2 flex items-center">
+                                    <ImageIcon size={12} className="ml-1" />
+                                    حداکثر ۸۰۰ پیکسل
+                                </div>
+                                <ImageUploader 
+                                    currentImage={editingProduct.image}
+                                    onImageSelect={(base64) => setEditingProduct({...editingProduct, image: base64})}
+                                    maxWidth={800}
+                                    maxHeight={800}
+                                    quality={0.8}
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">دسته‌بندی</label>
-                                    <select 
-                                        value={editingProduct.category}
-                                        onChange={e => setEditingProduct({...editingProduct, category: e.target.value})}
-                                        className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-                                    >
-                                        {CATEGORIES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">قیمت (تومان)</label>
+
+                            {/* Fields Column */}
+                            <div className="w-full md:w-2/3 space-y-4">
+                                 <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">نام محصول</label>
                                     <input 
-                                        type="number" 
+                                        type="text" 
                                         required
-                                        value={editingProduct.price}
-                                        onChange={e => setEditingProduct({...editingProduct, price: Number(e.target.value)})}
+                                        autoFocus
+                                        value={editingProduct.name}
+                                        onChange={e => setEditingProduct({...editingProduct, name: e.target.value})}
                                         className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
                                     />
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">قیمت قبلی (تومان)</label>
-                                <input 
-                                    type="number" 
-                                    value={editingProduct.oldPrice || ''}
-                                    onChange={e => setEditingProduct({...editingProduct, oldPrice: Number(e.target.value)})}
-                                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">توضیحات</label>
-                                <textarea 
-                                    rows={3}
-                                    value={editingProduct.description}
-                                    onChange={e => setEditingProduct({...editingProduct, description: e.target.value})}
-                                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-                                ></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Features Section */}
-                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                        <label className="block text-sm font-bold text-gray-700 mb-2">ویژگی‌های محصول</label>
-                        <div className="flex gap-2 mb-3">
-                            <input 
-                                type="text" 
-                                value={newFeature}
-                                onChange={e => setNewFeature(e.target.value)}
-                                placeholder="مثلا: دارای گارانتی ۱۸ ماهه"
-                                className="flex-1 border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none bg-white"
-                                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
-                            />
-                            <button 
-                                type="button" 
-                                onClick={addFeature}
-                                className="bg-gray-800 text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition active:scale-95"
-                            >
-                                <Plus size={20} />
-                            </button>
-                        </div>
-                        <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
-                            {editingProduct.features?.map((feature, idx) => (
-                                <div key={idx} className="flex justify-between items-center bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm">
-                                    <span>{feature}</span>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => removeFeature(idx)}
-                                        className="text-red-500 hover:text-red-700 transition hover:scale-110"
-                                    >
-                                        <MinusCircle size={16} />
-                                    </button>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">دسته‌بندی</label>
+                                        <select 
+                                            value={editingProduct.category}
+                                            onChange={e => setEditingProduct({...editingProduct, category: e.target.value})}
+                                            className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none bg-white"
+                                        >
+                                            {CATEGORIES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">قیمت (تومان)</label>
+                                        <input 
+                                            type="number" 
+                                            required
+                                            value={editingProduct.price}
+                                            onChange={e => setEditingProduct({...editingProduct, price: Number(e.target.value)})}
+                                            className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+                                        />
+                                    </div>
                                 </div>
-                            ))}
-                            {(!editingProduct.features || editingProduct.features.length === 0) && (
-                                <p className="text-gray-400 text-xs italic text-center py-2">هنوز ویژگی‌ای اضافه نشده است.</p>
-                            )}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">قیمت قبلی (تومان)</label>
+                                    <input 
+                                        type="number" 
+                                        value={editingProduct.oldPrice || ''}
+                                        onChange={e => setEditingProduct({...editingProduct, oldPrice: Number(e.target.value)})}
+                                        className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">توضیحات</label>
+                                    <textarea 
+                                        rows={3}
+                                        value={editingProduct.description}
+                                        onChange={e => setEditingProduct({...editingProduct, description: e.target.value})}
+                                        className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+                                    ></textarea>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* SEO Section */}
-                    <div className="border rounded-xl p-4 border-gray-200">
-                        <div className="flex items-center gap-2 mb-4 text-gray-800">
-                            <Search size={18} className="text-green-600" />
-                            <h3 className="font-bold text-sm">تنظیمات سئو (SEO)</h3>
-                        </div>
-                        <div className="space-y-3">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1">عنوان متا (Meta Title)</label>
+                        {/* Features Section */}
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <label className="block text-sm font-bold text-gray-700 mb-2">ویژگی‌های محصول</label>
+                            <div className="flex gap-2 mb-3">
                                 <input 
                                     type="text" 
-                                    value={editingProduct.metaTitle || ''}
-                                    onChange={e => setEditingProduct({...editingProduct, metaTitle: e.target.value})}
-                                    className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
-                                    placeholder="اگر خالی باشد، از نام محصول استفاده می‌شود"
+                                    value={newFeature}
+                                    onChange={e => setNewFeature(e.target.value)}
+                                    placeholder="مثلا: دارای گارانتی ۱۸ ماهه"
+                                    className="flex-1 border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none bg-white"
+                                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
                                 />
+                                <button 
+                                    type="button" 
+                                    onClick={addFeature}
+                                    className="bg-gray-800 text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition active:scale-95"
+                                >
+                                    <Plus size={20} />
+                                </button>
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1">توضیحات متا (Meta Description)</label>
-                                <textarea 
-                                    rows={2}
-                                    value={editingProduct.metaDescription || ''}
-                                    onChange={e => setEditingProduct({...editingProduct, metaDescription: e.target.value})}
-                                    className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
-                                    placeholder="توضیحاتی برای موتورهای جستجو..."
-                                />
+                            <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
+                                {editingProduct.features?.map((feature, idx) => (
+                                    <div key={idx} className="flex justify-between items-center bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm">
+                                        <span>{feature}</span>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => removeFeature(idx)}
+                                            className="text-red-500 hover:text-red-700 transition hover:scale-110"
+                                        >
+                                            <MinusCircle size={16} />
+                                        </button>
+                                    </div>
+                                ))}
+                                {(!editingProduct.features || editingProduct.features.length === 0) && (
+                                    <p className="text-gray-400 text-xs italic text-center py-2">هنوز ویژگی‌ای اضافه نشده است.</p>
+                                )}
                             </div>
                         </div>
-                    </div>
-                    
-                    <div className="pt-4 border-t flex justify-end gap-3">
-                        <button 
-                            type="button" 
-                            onClick={() => setIsModalOpen(false)}
-                            className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50 transition active:scale-95"
-                        >
-                            انصراف
-                        </button>
-                        <button 
-                            type="submit" 
-                            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-orange-600 shadow-md transition active:scale-95 font-bold"
-                        >
-                            {editingProduct.id ? 'ذخیره تغییرات' : 'افزودن محصول'}
-                        </button>
-                    </div>
-                </form>
+
+                        {/* SEO Section */}
+                        <div className="border rounded-xl p-4 border-gray-200">
+                            <div className="flex items-center gap-2 mb-4 text-gray-800">
+                                <Search size={18} className="text-green-600" />
+                                <h3 className="font-bold text-sm">تنظیمات سئو (SEO)</h3>
+                            </div>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">عنوان متا (Meta Title)</label>
+                                    <input 
+                                        type="text" 
+                                        value={editingProduct.metaTitle || ''}
+                                        onChange={e => setEditingProduct({...editingProduct, metaTitle: e.target.value})}
+                                        className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+                                        placeholder="اگر خالی باشد، از نام محصول استفاده می‌شود"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">توضیحات متا (Meta Description)</label>
+                                    <textarea 
+                                        rows={2}
+                                        value={editingProduct.metaDescription || ''}
+                                        onChange={e => setEditingProduct({...editingProduct, metaDescription: e.target.value})}
+                                        className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+                                        placeholder="توضیحاتی برای موتورهای جستجو..."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                {/* Footer Buttons - Sticky */}
+                <div className="p-4 border-t flex justify-end gap-3 bg-white rounded-b-xl flex-shrink-0 z-10">
+                    <button 
+                        type="button" 
+                        onClick={() => setIsModalOpen(false)}
+                        className="px-5 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition active:scale-95 font-medium"
+                    >
+                        انصراف
+                    </button>
+                    <button 
+                        type="submit" 
+                        form="product-form"
+                        className="px-8 py-2.5 bg-primary text-white rounded-xl hover:bg-orange-600 shadow-lg shadow-orange-500/30 transition active:scale-95 font-bold"
+                    >
+                        {editingProduct.id ? 'ذخیره تغییرات' : 'افزودن محصول'}
+                    </button>
+                </div>
             </div>
         </div>
       )}

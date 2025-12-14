@@ -103,107 +103,123 @@ const AdminBlog: React.FC = () => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b flex justify-between items-center">
-              <h2 className="text-xl font-bold">{editingPost.id ? 'ویرایش مقاله' : 'افزودن مقاله جدید'}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-xl flex-shrink-0">
+              <h2 className="text-xl font-bold text-gray-800">{editingPost.id ? 'ویرایش مقاله' : 'افزودن مقاله جدید'}</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-red-500 p-1 rounded-full hover:bg-white transition-colors"><X size={24} /></button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">عنوان مقاله</label>
-                <input 
-                  type="text" 
-                  required
-                  value={editingPost.title}
-                  onChange={e => setEditingPost({...editingPost, title: e.target.value})}
-                  className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* Scrollable Body */}
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <form id="blog-form" onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">نویسنده</label>
-                  <input 
+                    <label className="block text-sm font-medium text-gray-700 mb-1">عنوان مقاله</label>
+                    <input 
                     type="text" 
                     required
-                    value={editingPost.author}
-                    onChange={e => setEditingPost({...editingPost, author: e.target.value})}
+                    value={editingPost.title}
+                    onChange={e => setEditingPost({...editingPost, title: e.target.value})}
                     className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-                  />
+                    />
                 </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">نویسنده</label>
+                    <input 
+                        type="text" 
+                        required
+                        value={editingPost.author}
+                        onChange={e => setEditingPost({...editingPost, author: e.target.value})}
+                        className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+                    />
+                    </div>
+                    <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">تاریخ انتشار</label>
+                    <input 
+                        type="text" 
+                        required
+                        value={editingPost.date}
+                        onChange={e => setEditingPost({...editingPost, date: e.target.value})}
+                        className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+                    />
+                    </div>
+                </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">تاریخ انتشار</label>
-                  <input 
-                    type="text" 
-                    required
-                    value={editingPost.date}
-                    onChange={e => setEditingPost({...editingPost, date: e.target.value})}
-                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-                  />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">تصویر مقاله</label>
+                    <div className="text-xs text-gray-500 mb-2">حداکثر ۸۰۰ پیکسل</div>
+                    <ImageUploader 
+                        currentImage={editingPost.image}
+                        onImageSelect={(base64) => setEditingPost({...editingPost, image: base64})}
+                        className="h-40"
+                        maxWidth={800}
+                        maxHeight={600}
+                    />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">تصویر مقاله</label>
-                <div className="text-xs text-gray-500 mb-2">حداکثر ۸۰۰ پیکسل</div>
-                <ImageUploader 
-                    currentImage={editingPost.image}
-                    onImageSelect={(base64) => setEditingPost({...editingPost, image: base64})}
-                    className="h-40"
-                    maxWidth={800}
-                    maxHeight={600}
-                />
-              </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">خلاصه متن</label>
+                    <textarea 
+                    rows={4}
+                    required
+                    value={editingPost.excerpt}
+                    onChange={e => setEditingPost({...editingPost, excerpt: e.target.value})}
+                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
+                    ></textarea>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">خلاصه متن</label>
-                <textarea 
-                  rows={4}
-                  required
-                  value={editingPost.excerpt}
-                  onChange={e => setEditingPost({...editingPost, excerpt: e.target.value})}
-                  className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-                ></textarea>
-              </div>
+                {/* SEO Section */}
+                <div className="border rounded-xl p-4 border-gray-200 mt-4">
+                    <div className="flex items-center gap-2 mb-4 text-gray-800">
+                        <Search size={18} className="text-green-600" />
+                        <h3 className="font-bold text-sm">تنظیمات سئو (SEO)</h3>
+                    </div>
+                    <div className="space-y-3">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-600 mb-1">عنوان متا (Meta Title)</label>
+                            <input 
+                                type="text" 
+                                value={editingPost.metaTitle || ''}
+                                onChange={e => setEditingPost({...editingPost, metaTitle: e.target.value})}
+                                className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+                                placeholder="پیش‌فرض: عنوان مقاله"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-600 mb-1">توضیحات متا (Meta Description)</label>
+                            <textarea 
+                                rows={2}
+                                value={editingPost.metaDescription || ''}
+                                onChange={e => setEditingPost({...editingPost, metaDescription: e.target.value})}
+                                className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+                                placeholder="توضیحاتی جذاب برای موتورهای جستجو..."
+                            />
+                        </div>
+                    </div>
+                </div>
+                </form>
+            </div>
 
-              {/* SEO Section */}
-              <div className="border rounded-xl p-4 border-gray-200 mt-4">
-                  <div className="flex items-center gap-2 mb-4 text-gray-800">
-                      <Search size={18} className="text-green-600" />
-                      <h3 className="font-bold text-sm">تنظیمات سئو (SEO)</h3>
-                  </div>
-                  <div className="space-y-3">
-                      <div>
-                          <label className="block text-xs font-bold text-gray-600 mb-1">عنوان متا (Meta Title)</label>
-                          <input 
-                              type="text" 
-                              value={editingPost.metaTitle || ''}
-                              onChange={e => setEditingPost({...editingPost, metaTitle: e.target.value})}
-                              className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
-                              placeholder="پیش‌فرض: عنوان مقاله"
-                          />
-                      </div>
-                      <div>
-                          <label className="block text-xs font-bold text-gray-600 mb-1">توضیحات متا (Meta Description)</label>
-                          <textarea 
-                              rows={2}
-                              value={editingPost.metaDescription || ''}
-                              onChange={e => setEditingPost({...editingPost, metaDescription: e.target.value})}
-                              className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
-                              placeholder="توضیحاتی جذاب برای موتورهای جستجو..."
-                          />
-                      </div>
-                  </div>
-              </div>
-
-              <div className="pt-4 border-t flex justify-end gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">انصراف</button>
-                <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-orange-600 shadow-md">
-                  {editingPost.id ? 'ذخیره تغییرات' : 'انتشار مقاله'}
+            {/* Sticky Footer */}
+            <div className="p-4 border-t flex justify-end gap-3 bg-white rounded-b-xl flex-shrink-0 z-10">
+                <button 
+                    type="button" 
+                    onClick={() => setIsModalOpen(false)} 
+                    className="px-5 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-medium transition active:scale-95"
+                >
+                    انصراف
                 </button>
-              </div>
-            </form>
+                <button 
+                    type="submit"
+                    form="blog-form"
+                    className="px-6 py-2.5 bg-primary text-white rounded-xl hover:bg-orange-600 shadow-lg font-bold transition active:scale-95"
+                >
+                    {editingPost.id ? 'ذخیره تغییرات' : 'انتشار مقاله'}
+                </button>
+            </div>
           </div>
         </div>
       )}

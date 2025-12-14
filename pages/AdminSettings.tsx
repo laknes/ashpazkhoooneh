@@ -25,6 +25,10 @@ const AdminSettings: React.FC = () => {
         if (!s.cloudinary) {
             s.cloudinary = { enabled: false, cloudName: '', apiKey: '', apiSecret: '' };
         }
+        // Ensure ssl config object exists
+        if (!s.ssl) {
+            s.ssl = { enabled: false, provider: 'manual', certCrt: '', privateKey: '' };
+        }
         setSettings(s);
       } catch (error) {
         console.error("Error loading settings:", error);
@@ -117,7 +121,10 @@ const AdminSettings: React.FC = () => {
                   const content = event.target.result as string;
                   setSettings({
                       ...settings,
-                      ssl: { ...settings.ssl, enabled: settings.ssl?.enabled || false, [field]: content }
+                      ssl: { 
+                          ...(settings.ssl || { enabled: false, provider: 'manual', certCrt: '', privateKey: '' }), 
+                          [field]: content 
+                      }
                   });
               }
           };
@@ -559,7 +566,7 @@ const AdminSettings: React.FC = () => {
                                 <button 
                                     type="button"
                                     onClick={() => certInputRef.current?.click()}
-                                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center"
+                                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center transition-colors"
                                 >
                                     <Upload size={12} className="ml-1" /> آپلود فایل
                                 </button>
@@ -587,7 +594,7 @@ const AdminSettings: React.FC = () => {
                                 <button 
                                     type="button"
                                     onClick={() => keyInputRef.current?.click()}
-                                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center"
+                                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center transition-colors"
                                 >
                                     <Upload size={12} className="ml-1" /> آپلود فایل
                                 </button>

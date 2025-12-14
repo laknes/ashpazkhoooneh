@@ -87,60 +87,77 @@ const AdminCategories: React.FC = () => {
         ))}
       </div>
 
+      {/* Modal with Sticky Header/Footer */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6 border-b flex justify-between items-center">
-              <h2 className="text-xl font-bold">{editingCategory.id ? 'ویرایش دسته' : 'افزودن دسته جدید'}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-xl flex-shrink-0">
+              <h2 className="text-xl font-bold text-gray-800">{editingCategory.id ? 'ویرایش دسته' : 'افزودن دسته جدید'}</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-red-500 p-1 rounded-full hover:bg-white transition-colors"><X size={24} /></button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">نام دسته‌بندی</label>
-                <input 
-                  type="text" 
-                  required
-                  value={editingCategory.name}
-                  onChange={e => setEditingCategory({...editingCategory, name: e.target.value})}
-                  className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-primary focus:outline-none"
-                  placeholder="مثال: لوازم برقی"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">تصویر دسته‌بندی</label>
-                <div className="bg-blue-50 text-blue-800 text-xs px-3 py-2 rounded-lg mb-2 flex items-center">
-                    <ImageIcon size={14} className="ml-1" />
-                    حداکثر ۴۰۰ پیکسل (بهتر است مربع باشد)
+            
+            {/* Scrollable Body */}
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <form id="category-form" onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">نام دسته‌بندی</label>
+                    <input 
+                    type="text" 
+                    required
+                    value={editingCategory.name}
+                    onChange={e => setEditingCategory({...editingCategory, name: e.target.value})}
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-primary focus:outline-none"
+                    placeholder="مثال: لوازم برقی"
+                    />
                 </div>
-                <ImageUploader 
-                    currentImage={editingCategory.image}
-                    onImageSelect={(base64) => setEditingCategory({...editingCategory, image: base64})}
-                    className="h-40"
-                    maxWidth={400}
-                    maxHeight={400}
-                />
-              </div>
+                
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">تصویر دسته‌بندی</label>
+                    <div className="bg-blue-50 text-blue-800 text-xs px-3 py-2 rounded-lg mb-2 flex items-center">
+                        <ImageIcon size={14} className="ml-1" />
+                        حداکثر ۴۰۰ پیکسل (بهتر است مربع باشد)
+                    </div>
+                    <ImageUploader 
+                        currentImage={editingCategory.image}
+                        onImageSelect={(base64) => setEditingCategory({...editingCategory, image: base64})}
+                        className="h-40"
+                        maxWidth={400}
+                        maxHeight={400}
+                    />
+                </div>
 
-              {/* Optional Icon fallback hidden or minimized */}
-              <div className="opacity-50 hover:opacity-100 transition-opacity">
-                 <label className="block text-xs font-medium text-gray-500 mb-1">آیکون (اختیاری - ایموجی)</label>
-                 <input 
-                  type="text" 
-                  value={editingCategory.icon || ''}
-                  onChange={e => setEditingCategory({...editingCategory, icon: e.target.value})}
-                  className="w-full border rounded-lg p-2 text-sm"
-                  placeholder="⚡"
-                />
-              </div>
+                {/* Optional Icon fallback hidden or minimized */}
+                <div className="opacity-75 hover:opacity-100 transition-opacity">
+                    <label className="block text-xs font-medium text-gray-500 mb-1">آیکون (اختیاری - ایموجی)</label>
+                    <input 
+                    type="text" 
+                    value={editingCategory.icon || ''}
+                    onChange={e => setEditingCategory({...editingCategory, icon: e.target.value})}
+                    className="w-full border rounded-lg p-2 text-sm"
+                    placeholder="⚡"
+                    />
+                </div>
+                </form>
+            </div>
 
-              <div className="pt-4 border-t flex justify-end gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">انصراف</button>
-                <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-orange-600 shadow-md">
-                  {editingCategory.id ? 'ذخیره تغییرات' : 'افزودن'}
+            {/* Sticky Footer */}
+            <div className="p-4 border-t flex justify-end gap-3 bg-white rounded-b-xl flex-shrink-0 z-10">
+                <button 
+                    type="button" 
+                    onClick={() => setIsModalOpen(false)} 
+                    className="px-5 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-medium transition active:scale-95"
+                >
+                    انصراف
                 </button>
-              </div>
-            </form>
+                <button 
+                    type="submit"
+                    form="category-form"
+                    className="px-8 py-2.5 bg-primary text-white rounded-xl hover:bg-orange-600 shadow-lg font-bold transition active:scale-95"
+                >
+                    {editingCategory.id ? 'ذخیره تغییرات' : 'افزودن'}
+                </button>
+            </div>
           </div>
         </div>
       )}

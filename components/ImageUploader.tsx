@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Image as ImageIcon, Upload, X, Loader2, Link as LinkIcon, AlertTriangle, Cloud } from 'lucide-react';
+import { Image as ImageIcon, Upload, X, Loader2, Link as LinkIcon, Cloud } from 'lucide-react';
 
 interface ImageUploaderProps {
   currentImage?: string;
@@ -95,10 +95,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
       setIsProcessing(true);
       try {
-        // 1. Resize Client-Side first to save bandwidth
         const resizedImage = await resizeImage(file);
         
-        // 2. Try to upload to server (which handles Cloudinary)
         try {
             const res = await fetch('/api/upload', {
                 method: 'POST',
@@ -108,14 +106,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
             if (res.ok) {
                 const data = await res.json();
-                onImageSelect(data.url); // Use Cloud URL
+                onImageSelect(data.url);
             } else {
-                // If 400 (not configured) or error, fallback to base64
-                // console.warn("Cloud upload skipped/failed, using local base64");
                 onImageSelect(resizedImage); 
             }
         } catch (uploadError) {
-            // Network error etc, fallback
             onImageSelect(resizedImage);
         }
       } catch (error) {
@@ -153,7 +148,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                 className={`flex-1 text-xs font-bold py-1.5 rounded-md transition-all flex items-center justify-center gap-2 ${mode === 'UPLOAD' ? 'bg-white shadow text-primary' : 'text-gray-500'}`}
             >
                 <Upload size={14} />
-                آپلود فایل
+                آپلود
             </button>
             <button 
                 type="button"
@@ -161,7 +156,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                 className={`flex-1 text-xs font-bold py-1.5 rounded-md transition-all flex items-center justify-center gap-2 ${mode === 'URL' ? 'bg-white shadow text-primary' : 'text-gray-500'}`}
             >
                 <LinkIcon size={14} />
-                لینک مستقیم
+                لینک
             </button>
         </div>
 
@@ -174,14 +169,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                         value={currentImage?.startsWith('data:') ? '' : currentImage}
                         onChange={(e) => onImageSelect(e.target.value)}
                         placeholder="https://example.com/image.jpg"
-                        className="w-full pl-3 pr-10 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:outline-none dir-ltr bg-white"
+                        className="w-full pl-3 pr-9 py-2.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-primary focus:outline-none dir-ltr bg-white"
                     />
-                    <LinkIcon size={18} className="absolute right-3 top-3.5 text-gray-400" />
+                    <LinkIcon size={16} className="absolute right-3 top-3 text-gray-400" />
                 </div>
-                <p className="text-[10px] text-green-600 mt-1.5 mr-1 flex items-center font-medium">
-                    <LinkIcon size={10} className="ml-1"/>
-                    استفاده از لینک برای نمایش در تمام دستگاه‌ها پیشنهاد می‌شود.
-                </p>
             </div>
         )}
 
@@ -210,14 +201,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                         onClick={() => fileInputRef.current?.click()}
                     >
                         {!currentImage || mode === 'UPLOAD' ? (
-                            <div className="py-6 flex flex-col items-center text-gray-400">
-                                <div className="p-3 bg-white rounded-full mb-2 shadow-sm">
-                                    <ImageIcon size={24} className="text-gray-500" />
+                            <div className="py-4 flex flex-col items-center text-gray-400">
+                                <div className="p-2 bg-white rounded-full mb-2 shadow-sm">
+                                    <ImageIcon size={20} className="text-gray-500" />
                                 </div>
                                 <span className="text-xs font-bold text-gray-600">انتخاب تصویر</span>
-                                <span className="text-[10px] mt-1 text-gray-400 text-center px-4 dir-ltr">
-                                    (Max {maxWidth}x{maxHeight}px)
-                                </span>
                             </div>
                         ) : null}
                     </div>
@@ -226,17 +214,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                         <div className="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm z-10">
                             <div className="flex flex-col items-center text-primary">
                                 <Loader2 size={24} className="animate-spin mb-2" />
-                                <span className="text-xs font-bold">آپلود و بهینه‌سازی...</span>
+                                <span className="text-xs font-bold">...</span>
                             </div>
                         </div>
                     )}
-                </div>
-                
-                {/* Info Text about storage */}
-                <div className="mt-2 flex items-start gap-1">
-                     <p className="text-[10px] text-gray-400 leading-tight">
-                        * اگر Cloudinary فعال باشد، تصویر به صورت خودکار در فضای ابری ذخیره می‌شود. در غیر این صورت به صورت Local Base64 ذخیره خواهد شد.
-                    </p>
                 </div>
             </div>
         )}
@@ -254,20 +235,18 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                         }}
                         className="text-red-500 hover:text-red-700 text-[10px] flex items-center bg-red-50 px-2 py-1 rounded hover:bg-red-100 transition-colors"
                     >
-                        <X size={12} className="ml-1" /> حذف تصویر
+                        <X size={12} className="ml-1" /> حذف
                     </button>
                 </div>
-                <div className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 checkerboard-bg">
+                <div className="relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 checkerboard-bg">
                     <img 
                         src={currentImage} 
                         alt="Preview" 
                         className="w-full h-full object-contain" 
                         onError={(e) => {
-                            // Helper to show broken image placeholder
                             e.currentTarget.src = "https://placehold.co/600x400/f3f4f6/9ca3af?text=Broken+Image";
                         }}
                     />
-                    {/* Cloud Icon Indicator */}
                     {currentImage.includes('cloudinary.com') && (
                         <div className="absolute top-2 right-2 bg-white/90 backdrop-blur text-blue-600 p-1 rounded shadow-sm" title="ذخیره شده در فضای ابری">
                             <Cloud size={14} />
