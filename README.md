@@ -110,21 +110,189 @@ chmod +x update.bash
 
 ---
 
-## 🔐 راهنمای تنظیم SSL (جداگانه)
+## 🔐 راهنمای تنظیم SSL (Cloudflare / Let's Encrypt)
 
-اگر نیاز دارید فقط گواهینامه SSL را روی سرور Nginx تنظیم کنید (مثلاً اگر دامنه تغییر کرده است)، از فایل `ssl.sh` استفاده کنید.
+اگر اس اس ال به درستی کار نمی‌کند یا از **Cloudflare** استفاده می‌کنید، از اسکریپت جدید `ssl.sh` استفاده کنید که امکان پیکربندی دستی گواهینامه (Certificate) را نیز دارد.
 
-۱. به فایل دسترسی اجرا بدهید:
+۱. فایل `ssl.sh` را با محتوای زیر ایجاد یا بروزرسانی کنید:
+
+```bash
+#!/bin/bash
+
+# Configuration
+APP_PORT=3001
+
+# Colors
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}==============================================${NC}"
+echo -e "${BLUE}   Nginx SSL Configuration Helper             ${NC}"
+echo -e "${BLUE}==============================================${NC}"
+
+# Check for root
+if [ "$EUID" -ne 0 ]; then
+  echo -e "${RED}Error: Please run as root (sudo ./ssl.sh)${NC}"
+  exit 1
+fi
+
+# Check if Nginx is installed
+if ! command -v nginx &> /dev/null; then
+    echo -e "${YELLOW}Nginx not found. Installing...${NC}"
+    apt-get update
+    apt-get install -y nginx
+fi
+
+# Input Domain
+read -p "Enter Domain Name (e.g., example.com): " DOMAIN
+if [ -z "$DOMAIN" ]; then
+    echo "Domain is required."
+    exit 1
+fi
+
+echo ""
+echo "Select SSL Method:"
+echo "1) Let's Encrypt (Auto - via Certbot)"
+echo "2) Cloudflare / Custom Certificate (Manual - Origin CA)"
+read -p "Choose [1 or 2]: " CHOICE
+
+if [ "$CHOICE" == "1" ]; then
+    # --- LET'S ENCRYPT ---
+    echo -e "${GREEN}>>> Configuring Let's Encrypt...${NC}"
+    
+    read -p "Enter Email Address (for Let's Encrypt): " EMAIL
+    if [ -z "$EMAIL" ]; then
+        echo "Email is required."
+        exit 1
+    fi
+
+    # Install Certbot
+    apt-get install -y certbot python3-certbot-nginx
+
+    # Basic Nginx Config for Certbot to find
+    cat > /etc/nginx/sites-available/$DOMAIN << EOL
+server {
+    listen 80;
+    server_name $DOMAIN www.$DOMAIN;
+
+    location / {
+        proxy_pass http://localhost:$APP_PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+    }
+}
+EOL
+
+    ln -sf /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
+    rm /etc/nginx/sites-enabled/default 2>/dev/null
+    
+    systemctl restart nginx
+
+    # Obtain Cert
+    certbot --nginx -d $DOMAIN -d www.$DOMAIN -m $EMAIL --agree-tos --non-interactive --redirect
+
+elif [ "$CHOICE" == "2" ]; then
+    # --- CLOUDFLARE / CUSTOM ---
+    echo -e "${GREEN}>>> Configuring Cloudflare / Custom SSL...${NC}"
+    
+    mkdir -p /etc/nginx/ssl
+    
+    echo -e "${YELLOW}Step 1: Origin Certificate${NC}"
+    echo "Please paste the content of your Certificate (.pem/.crt) below."
+    echo "Press CTRL+D when finished."
+    echo "---------------------------------------------------"
+    cat > /etc/nginx/ssl/$DOMAIN.crt
+    echo ""
+    echo "Certificate saved."
+
+    echo -e "${YELLOW}Step 2: Private Key${NC}"
+    echo "Please paste the content of your Private Key (.key) below."
+    echo "Press CTRL+D when finished."
+    echo "---------------------------------------------------"
+    cat > /etc/nginx/ssl/$DOMAIN.key
+    echo ""
+    echo "Private key saved."
+
+    # Validate files are not empty
+    if [ ! -s "/etc/nginx/ssl/$DOMAIN.crt" ] || [ ! -s "/etc/nginx/ssl/$DOMAIN.key" ]; then
+        echo -e "${RED}Error: Certificate or Key file is empty.${NC}"
+        exit 1
+    fi
+
+    echo -e "${GREEN}Step 3: Generating Nginx Config...${NC}"
+    
+    # Cloudflare/Custom Nginx Config
+    cat > /etc/nginx/sites-available/$DOMAIN << EOL
+server {
+    listen 80;
+    server_name $DOMAIN www.$DOMAIN;
+    # Redirect all HTTP to HTTPS
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name $DOMAIN www.$DOMAIN;
+
+    # SSL Configuration
+    ssl_certificate /etc/nginx/ssl/$DOMAIN.crt;
+    ssl_certificate_key /etc/nginx/ssl/$DOMAIN.key;
+    
+    # Recommended settings for Cloudflare Origin CA
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+
+    location / {
+        proxy_pass http://localhost:$APP_PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+    }
+}
+EOL
+
+    ln -sf /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
+    rm /etc/nginx/sites-enabled/default 2>/dev/null
+
+    echo -e "${GREEN}Step 4: Testing & Reloading Nginx...${NC}"
+    nginx -t
+    if [ $? -eq 0 ]; then
+        systemctl restart nginx
+        echo -e "${BLUE}>>> Success! SSL configured for https://$DOMAIN${NC}"
+        echo -e "${BLUE}Make sure Cloudflare SSL/TLS mode is set to 'Full (Strict)'${NC}"
+    else
+        echo -e "${RED}Nginx configuration failed. Please check your certificate files.${NC}"
+        exit 1
+    fi
+
+else
+    echo "Invalid choice."
+    exit 1
+fi
+```
+
+۲. به فایل دسترسی اجرا بدهید:
 ```bash
 chmod +x ssl.sh
 ```
 
-۲. اسکریپت را اجرا کنید و طبق دستورالعمل، نام دامنه و ایمیل را وارد نمایید:
+۳. اسکریپت را اجرا کنید:
 ```bash
 ./ssl.sh
 ```
 
-این اسکریپت به صورت خودکار `Certbot` را نصب کرده و گواهینامه Let's Encrypt را دریافت و روی Nginx تنظیم می‌کند.
+۴. گزینه **۲** (Cloudflare) را انتخاب کنید. سپس محتوای **Origin Certificate** و **Private Key** را که از پنل Cloudflare دریافت کرده‌اید، کپی و در ترمینال پیست کنید (با زدن `Ctrl+D` ذخیره کنید).
+
+> **نکته:** حتماً در پنل Cloudflare، حالت SSL/TLS را روی **Full (Strict)** قرار دهید.
 
 ---
 
@@ -153,7 +321,7 @@ echo -e "${BLUE}=========================================${NC}"
 echo -e "${BLUE}   Ashpazkhoneh Auto Installer   ${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
-# Check for root privileges
+# Check for root
 if [ "$EUID" -ne 0 ]; then
   echo -e "${RED}Please run this script as root or with sudo.${NC}"
   exit
