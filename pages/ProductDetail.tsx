@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Star, ShoppingCart, Truck, Shield, Sparkles } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { ArrowRight, Star, ShoppingCart, Truck, Shield, Sparkles, Share2, Check } from 'lucide-react';
 import { Product } from '../types';
 import { formatPrice } from '../constants';
 import { generateChefResponse } from '../services/geminiService';
@@ -9,7 +10,7 @@ import { ProductCard } from '../components/ProductCard';
 import SEO from '../components/SEO';
 
 interface ProductDetailProps {
-  product: Product;
+  product?: Product; // Make optional as it might be fetched by ID
   onBack: () => void;
   onAddToCart: (product: Product) => void;
   onProductClick: (product: Product) => void;
@@ -19,7 +20,7 @@ interface ProductDetailProps {
 }
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ 
-  product, 
+  product: initialProduct, 
   onBack, 
   onAddToCart, 
   onProductClick, 
@@ -27,12 +28,64 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
   onToggleWishlist, 
   onLoadingStateChange 
 }) => {
+  const { id } = useParams<{ id: string }>();
+  const [product, setProduct] = useState<Product | undefined>(initialProduct);
   const [activeTab, setActiveTab] = useState<'desc' | 'features'>('desc');
   const [aiAdvice, setAiAdvice] = useState<string>('');
   const [loadingAi, setLoadingAi] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [isCopied, setIsCopied] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(!initialProduct);
+
+  // Fetch product if not provided via props (direct URL access)
+  useEffect(() => {
+    const loadProduct = async () => {
+        if (!id) return;
+        
+        // If we already have the correct product from props, skip fetch
+        if (initialProduct && initialProduct.id === Number(id)) {
+            setProduct(initialProduct);
+            setLoadingProduct(false);
+            return;
+        }
+
+        setLoadingProduct(true);
+        if (onLoadingStateChange) onLoadingStateChange(true);
+        try {
+            const foundProduct = await db.products.getById(Number(id));
+            setProduct(foundProduct);
+        } catch (error) {
+            console.error("Error fetching product:", error);
+        } finally {
+            setLoadingProduct(false);
+            if (onLoadingStateChange) onLoadingStateChange(false);
+        }
+    };
+
+    loadProduct();
+    // Reset AI advice when product changes
+    setAiAdvice('');
+  }, [id, initialProduct]);
+
+  useEffect(() => {
+    if (!product) return;
+
+    const fetchRelated = async () => {
+      try {
+        const allProducts = await db.products.getAll();
+        const related = allProducts
+          .filter(p => p.category === product.category && p.id !== product.id)
+          .slice(0, 4);
+        setRelatedProducts(related);
+      } catch (error) {
+        console.error("Error fetching related products", error);
+      }
+    };
+    fetchRelated();
+  }, [product]);
 
   const handleAskAi = async () => {
+    if (!product) return;
     setLoadingAi(true);
     if (onLoadingStateChange) onLoadingStateChange(true);
     
@@ -51,20 +104,44 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
     }
   };
 
-  useEffect(() => {
-    const fetchRelated = async () => {
-      try {
-        const allProducts = await db.products.getAll();
-        const related = allProducts
-          .filter(p => p.category === product.category && p.id !== product.id)
-          .slice(0, 4);
-        setRelatedProducts(related);
-      } catch (error) {
-        console.error("Error fetching related products", error);
-      }
+  const handleShare = async () => {
+    if (!product) return;
+    const shareData = {
+        title: product.name,
+        text: `خرید ${product.name} از فروشگاه آشپزخونه`,
+        url: window.location.href,
     };
-    fetchRelated();
-  }, [product]);
+
+    if (navigator.share) {
+        try {
+            await navigator.share(shareData);
+        } catch (err) {
+            console.log('Error sharing:', err);
+        }
+    } else {
+        // Fallback to clipboard
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy link:', err);
+        }
+    }
+  };
+
+  if (loadingProduct) {
+      return <div className="min-h-[50vh] flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>;
+  }
+
+  if (!product) {
+      return <div className="min-h-[50vh] flex flex-col items-center justify-center text-gray-500">
+          <h2 className="text-xl font-bold mb-4">محصول یافت نشد</h2>
+          <button onClick={onBack} className="text-primary hover:underline">بازگشت به فروشگاه</button>
+      </div>;
+  }
 
   // JSON-LD Schema for Product
   const productSchema = {
@@ -117,12 +194,21 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
       <div className="glass-card rounded-2xl shadow-sm overflow-hidden mb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-8">
             {/* Image Section */}
-            <div className="p-4 md:p-8 flex items-center justify-center bg-white/40">
+            <div className="p-4 md:p-8 flex items-center justify-center bg-white/40 relative">
                 <img 
                     src={product.image} 
                     alt={product.name} 
                     className="max-w-full max-h-[300px] md:max-h-[500px] object-contain drop-shadow-lg transition-all duration-500 hover:scale-105 hover:drop-shadow-2xl mix-blend-multiply" 
                 />
+                
+                {/* Share Button (Mobile/Desktop) */}
+                <button
+                    onClick={handleShare}
+                    className="absolute top-4 right-4 p-2 bg-white/80 hover:bg-white text-gray-600 hover:text-blue-500 rounded-full shadow-sm backdrop-blur-sm transition-all duration-200 z-10"
+                    title="اشتراک‌گذاری"
+                >
+                    {isCopied ? <Check size={20} className="text-green-500"/> : <Share2 size={20} />}
+                </button>
             </div>
 
             {/* Info Section */}
@@ -167,7 +253,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
 
                 <div className="mt-auto space-y-4">
                     <button 
-                        onClick={() => onAddToCart(product)}
+                        onClick={() => onAddToCart(product!)}
                         className="w-full bg-primary hover:bg-orange-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl shadow-orange-200 transition-all duration-300 transform hover:-translate-y-1 active:translate-y-0 active:scale-95 flex justify-center items-center"
                     >
                         <ShoppingCart className="ml-2" />

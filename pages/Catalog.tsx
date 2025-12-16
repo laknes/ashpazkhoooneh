@@ -10,18 +10,24 @@ interface CatalogProps {
   onAddToCart: (product: Product) => void;
   wishlist: number[];
   onToggleWishlist: (id: number) => void;
+  initialCategory?: string;
 }
 
-const Catalog: React.FC<CatalogProps> = ({ onProductClick, onAddToCart, wishlist, onToggleWishlist }) => {
+const Catalog: React.FC<CatalogProps> = ({ onProductClick, onAddToCart, wishlist, onToggleWishlist, initialCategory = 'all' }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [priceRange, setPriceRange] = useState<number>(20000000);
   const [sortBy, setSortBy] = useState<string>('newest');
   const [loading, setLoading] = useState(true);
   
   // Mobile filter toggle state
   const [showFilters, setShowFilters] = useState(false);
+
+  // Sync initialCategory when it changes (e.g. navigation from home)
+  useEffect(() => {
+      setSelectedCategory(initialCategory);
+  }, [initialCategory]);
 
   // Load data from DB on mount
   useEffect(() => {

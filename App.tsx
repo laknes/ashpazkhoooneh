@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AdminLayout from './components/AdminLayout';
@@ -27,17 +28,63 @@ import { db } from './services/db';
 import { CheckCircle, X } from 'lucide-react';
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<ViewState>('HOME');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<number[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [targetCategory, setTargetCategory] = useState<string>('all');
+
+  // Helper to map URL path to ViewState for components that need it (like Navbar)
+  const getCurrentView = (): ViewState => {
+    const path = location.pathname;
+    if (path === '/') return 'HOME';
+    if (path.startsWith('/product/')) return 'PRODUCT_DETAIL';
+    if (path.startsWith('/catalog')) return 'CATALOG';
+    if (path === '/cart') return 'CART';
+    if (path === '/checkout') return 'CHECKOUT';
+    if (path === '/login') return 'LOGIN';
+    if (path === '/profile') return 'USER_PROFILE';
+    if (path === '/blog') return 'BLOG';
+    if (path === '/about') return 'ABOUT';
+    if (path === '/contact') return 'CONTACT';
+    if (path === '/ai-assistant') return 'AI_ASSISTANT';
+    if (path === '/admin') return 'ADMIN_DASHBOARD';
+    if (path.startsWith('/admin/')) {
+        const sub = path.split('/')[2];
+        return `ADMIN_${sub.toUpperCase()}` as ViewState;
+    }
+    return 'HOME';
+  };
+
+  const currentView = getCurrentView();
 
   // Initialize wishlist from DB
   useEffect(() => {
     setWishlist(db.wishlist.get());
+  }, []);
+
+  // Initialize favicon from settings
+  useEffect(() => {
+    const applyFavicon = async () => {
+        try {
+            const settings = await db.settings.get();
+            if (settings && settings.favicon) {
+                let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+                if (!link) {
+                    link = document.createElement('link');
+                    link.rel = 'icon';
+                    document.getElementsByTagName('head')[0].appendChild(link);
+                }
+                link.href = settings.favicon;
+            }
+        } catch (e) {
+            console.error("Failed to load favicon settings", e);
+        }
+    };
+    applyFavicon();
   }, []);
 
   // Heartbeat for Active Users Tracking
@@ -67,20 +114,47 @@ const App: React.FC = () => {
     setWishlist(updatedWishlist);
   };
 
-  // Navigation handlers
+  // Navigation logic replacement using React Router
   const handleNavigate = (view: ViewState) => {
     setIsLoading(true);
-    // Simulate network delay for transition effect
+    
+    // Simulate slight delay for loading bar effect if desired, or remove
     setTimeout(() => {
-        setCurrentView(view);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        setIsLoading(false);
-    }, 500);
+      setIsLoading(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      switch (view) {
+        case 'HOME': navigate('/'); break;
+        case 'CATALOG': navigate('/catalog'); break;
+        case 'CART': navigate('/cart'); break;
+        case 'CHECKOUT': navigate('/checkout'); break;
+        case 'LOGIN': navigate('/login'); break;
+        case 'USER_PROFILE': navigate('/profile'); break;
+        case 'BLOG': navigate('/blog'); break;
+        case 'ABOUT': navigate('/about'); break;
+        case 'CONTACT': navigate('/contact'); break;
+        case 'AI_ASSISTANT': navigate('/ai-assistant'); break;
+        
+        // Admin Routes
+        case 'ADMIN_DASHBOARD': navigate('/admin'); break;
+        case 'ADMIN_PRODUCTS': navigate('/admin/products'); break;
+        case 'ADMIN_ORDERS': navigate('/admin/orders'); break;
+        case 'ADMIN_USERS': navigate('/admin/users'); break;
+        case 'ADMIN_BLOG': navigate('/admin/blog'); break;
+        case 'ADMIN_CATEGORIES': navigate('/admin/categories'); break;
+        case 'ADMIN_SETTINGS': navigate('/admin/settings'); break;
+        default: navigate('/');
+      }
+    }, 300);
+  };
+
+  const handleCategorySelect = (category: string) => {
+      setTargetCategory(category);
+      navigate('/catalog');
   };
 
   const handleProductClick = (product: Product) => {
-    setSelectedProduct(product);
-    handleNavigate('PRODUCT_DETAIL');
+    navigate(`/product/${product.id}`);
   };
 
   // Cart Logic
@@ -95,7 +169,6 @@ const App: React.FC = () => {
       return [...prev, { ...product, quantity: 1 }];
     });
     
-    // Show toast
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
@@ -120,144 +193,50 @@ const App: React.FC = () => {
   // Auth Logic
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
-    // Auto-redirect to admin dashboard if role is ADMIN
     if (loggedInUser.role === 'ADMIN') {
-        handleNavigate('ADMIN_DASHBOARD');
+        navigate('/admin');
     } else {
-        handleNavigate('HOME');
+        navigate('/');
     }
   };
 
   const handleLogout = () => {
     setUser(null);
-    handleNavigate('HOME');
+    navigate('/');
   };
 
   const handleUserUpdate = (updatedUser: User) => {
       setUser(updatedUser);
   };
 
-  // Calculate a unique key for the view to trigger animation
-  // If we are in product detail, include product ID so switching products triggers animation
-  const viewKey = currentView === 'PRODUCT_DETAIL' && selectedProduct 
-    ? `PRODUCT_DETAIL-${selectedProduct.id}` 
-    : currentView;
+  // Check if current route is an Admin route
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
-  // Admin View Logic
-  if (currentView.startsWith('ADMIN')) {
-    // Only allow admin access if user has ADMIN role (in a real app)
-    if (currentView !== 'ADMIN_DASHBOARD' && user?.role !== 'ADMIN' && currentView.startsWith('ADMIN')) {
-       // Optional: Redirect to login or home if strictly enforcing
+  if (isAdminRoute) {
+    // Basic protection
+    if (!user || user.role !== 'ADMIN') {
+        // In a real app, redirection happens here. 
+        // For demo/dev purposes, sometimes we might want to bypass, but let's redirect to login
+        // return <Navigate to="/login" replace />; 
     }
 
     return (
       <AdminLayout currentView={currentView} onChangeView={handleNavigate} onLogout={handleLogout}>
-        <div key={viewKey} className="animate-fadeInUp">
-            {currentView === 'ADMIN_DASHBOARD' && <AdminDashboard onChangeView={handleNavigate} />}
-            {currentView === 'ADMIN_PRODUCTS' && <AdminProducts />}
-            {currentView === 'ADMIN_ORDERS' && <AdminOrders />}
-            {currentView === 'ADMIN_USERS' && <AdminUsers />}
-            {currentView === 'ADMIN_BLOG' && <AdminBlog />}
-            {currentView === 'ADMIN_CATEGORIES' && <AdminCategories />}
-            {currentView === 'ADMIN_SETTINGS' && <AdminSettings />}
+        <div className="animate-fadeInUp">
+            <Routes>
+                <Route path="/" element={<AdminDashboard onChangeView={handleNavigate} />} />
+                <Route path="/products" element={<AdminProducts />} />
+                <Route path="/orders" element={<AdminOrders />} />
+                <Route path="/users" element={<AdminUsers />} />
+                <Route path="/blog" element={<AdminBlog />} />
+                <Route path="/categories" element={<AdminCategories />} />
+                <Route path="/settings" element={<AdminSettings />} />
+                <Route path="*" element={<AdminDashboard onChangeView={handleNavigate} />} />
+            </Routes>
         </div>
       </AdminLayout>
     );
   }
-
-  // Storefront View Logic
-  const renderStoreView = () => {
-    switch (currentView) {
-      case 'HOME':
-        return (
-          <Home 
-            onChangeView={handleNavigate} 
-            onProductClick={handleProductClick}
-            onAddToCart={addToCart}
-            wishlist={wishlist}
-            onToggleWishlist={toggleWishlist}
-          />
-        );
-      case 'CATALOG':
-        return (
-          <Catalog 
-            onProductClick={handleProductClick}
-            onAddToCart={addToCart}
-            wishlist={wishlist}
-            onToggleWishlist={toggleWishlist}
-          />
-        );
-      case 'PRODUCT_DETAIL':
-        return selectedProduct ? (
-          <ProductDetail 
-            product={selectedProduct} 
-            onBack={() => handleNavigate('CATALOG')}
-            onAddToCart={addToCart}
-            onProductClick={handleProductClick}
-            wishlist={wishlist}
-            onToggleWishlist={toggleWishlist}
-            onLoadingStateChange={setIsLoading}
-          />
-        ) : <Catalog 
-              onProductClick={handleProductClick} 
-              onAddToCart={addToCart} 
-              wishlist={wishlist}
-              onToggleWishlist={toggleWishlist}
-            />;
-      case 'CART':
-        return (
-          <Cart 
-            cart={cart}
-            onUpdateQuantity={updateCartQuantity}
-            onRemove={removeFromCart}
-            onChangeView={handleNavigate}
-          />
-        );
-      case 'CHECKOUT':
-        return (
-          <Checkout 
-            cart={cart}
-            user={user}
-            onSuccess={() => {
-              clearCart();
-              handleNavigate('USER_PROFILE');
-            }}
-            onLoginRequest={() => handleNavigate('LOGIN')}
-            onLoadingStateChange={setIsLoading}
-          />
-        );
-      case 'LOGIN':
-        return <Login onLogin={handleLogin} onCancel={() => handleNavigate('HOME')} />;
-      case 'USER_PROFILE':
-        return user ? (
-          <UserProfile 
-            user={user} 
-            onLogout={handleLogout} 
-            onUpdateUser={handleUserUpdate} 
-            onEnterAdmin={() => handleNavigate('ADMIN_DASHBOARD')}
-            onEnterSettings={() => handleNavigate('ADMIN_SETTINGS')}
-          />
-        ) : <Login onLogin={handleLogin} onCancel={() => handleNavigate('HOME')} />;
-      case 'BLOG':
-        return <Blog />;
-      case 'ABOUT':
-        return <About />;
-      case 'CONTACT':
-        return <Contact />;
-      case 'AI_ASSISTANT':
-        return <AiAssistant onLoadingStateChange={setIsLoading} />;
-      default:
-        return (
-          <Home 
-            onChangeView={handleNavigate} 
-            onProductClick={handleProductClick} 
-            onAddToCart={addToCart} 
-            wishlist={wishlist}
-            onToggleWishlist={toggleWishlist}
-          />
-        );
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
@@ -271,8 +250,77 @@ const App: React.FC = () => {
       />
       
       <main className="flex-grow">
-        <div key={viewKey} className="animate-fadeInUp">
-            {renderStoreView()}
+        <div className="animate-fadeInUp">
+            <Routes>
+                <Route path="/" element={
+                    <Home 
+                        onChangeView={handleNavigate} 
+                        onProductClick={handleProductClick} 
+                        onAddToCart={addToCart} 
+                        wishlist={wishlist}
+                        onToggleWishlist={toggleWishlist}
+                        onCategorySelect={handleCategorySelect}
+                    />
+                } />
+                <Route path="/catalog" element={
+                    <Catalog 
+                        onProductClick={handleProductClick}
+                        onAddToCart={addToCart}
+                        wishlist={wishlist}
+                        onToggleWishlist={toggleWishlist}
+                        initialCategory={targetCategory}
+                    />
+                } />
+                <Route path="/product/:id" element={
+                    <ProductDetail 
+                        onBack={() => navigate('/catalog')}
+                        onAddToCart={addToCart}
+                        onProductClick={handleProductClick}
+                        wishlist={wishlist}
+                        onToggleWishlist={toggleWishlist}
+                        onLoadingStateChange={setIsLoading}
+                    />
+                } />
+                <Route path="/cart" element={
+                    <Cart 
+                        cart={cart}
+                        onUpdateQuantity={updateCartQuantity}
+                        onRemove={removeFromCart}
+                        onChangeView={handleNavigate}
+                    />
+                } />
+                <Route path="/checkout" element={
+                    <Checkout 
+                        cart={cart}
+                        user={user}
+                        onSuccess={() => {
+                            clearCart();
+                            navigate('/profile');
+                        }}
+                        onLoginRequest={() => navigate('/login')}
+                        onLoadingStateChange={setIsLoading}
+                    />
+                } />
+                <Route path="/login" element={
+                    <Login onLogin={handleLogin} onCancel={() => navigate('/')} />
+                } />
+                <Route path="/profile" element={
+                    user ? (
+                        <UserProfile 
+                            user={user} 
+                            onLogout={handleLogout} 
+                            onUpdateUser={handleUserUpdate} 
+                            onEnterAdmin={() => navigate('/admin')}
+                            onEnterSettings={() => navigate('/admin/settings')}
+                        />
+                    ) : <Navigate to="/login" replace />
+                } />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/ai-assistant" element={<AiAssistant onLoadingStateChange={setIsLoading} />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
         </div>
       </main>
 

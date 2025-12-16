@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 
 // Safely access process.env to prevent runtime crashes in browser environments
@@ -30,6 +31,10 @@ const getClient = () => {
     aiClient = new GoogleGenAI({ apiKey });
   }
   return aiClient;
+};
+
+export const isAiConfigured = (): boolean => {
+    return !!apiKey && apiKey.length > 0;
 };
 
 export const generateChefResponse = async (query: string): Promise<string> => {

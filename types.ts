@@ -123,6 +123,7 @@ export interface SiteSettings {
     telegram: string;
     custom?: { id: number; name: string; url: string }[];
   };
+  favicon?: string; // Website Favicon
   sms: SmsConfig;
   payment: PaymentConfig;
   shipping: ShippingConfig;
@@ -130,7 +131,6 @@ export interface SiteSettings {
   ssl: SslConfig;
   cloudinary?: CloudinaryConfig; // Added Cloudinary
   aboutText: string;
-  showAdminDemo?: boolean; // Control visibility of admin demo button
 }
 
 export interface Review {

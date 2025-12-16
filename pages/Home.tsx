@@ -13,9 +13,10 @@ interface HomeProps {
   onAddToCart: (product: Product) => void;
   wishlist: number[];
   onToggleWishlist: (id: number) => void;
+  onCategorySelect?: (category: string) => void;
 }
 
-const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, wishlist, onToggleWishlist }) => {
+const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, wishlist, onToggleWishlist, onCategorySelect }) => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -61,6 +62,14 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
     
     fetchData();
   }, []);
+
+  const handleCategoryClick = (categoryName: string) => {
+      if (onCategorySelect) {
+          onCategorySelect(categoryName);
+      } else {
+          onChangeView('CATALOG');
+      }
+  };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
 
@@ -116,7 +125,11 @@ const Home: React.FC<HomeProps> = ({ onChangeView, onProductClick, onAddToCart, 
         <h2 className="text-xl md:text-2xl font-bold mb-6 md:mb-8 text-gray-800 border-r-4 border-primary pr-3">دسته‌بندی‌ها</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
             {categories.map(cat => (
-                <div key={cat.id} className="group cursor-pointer flex flex-col items-center">
+                <div 
+                    key={cat.id} 
+                    onClick={() => handleCategoryClick(cat.name)}
+                    className="group cursor-pointer flex flex-col items-center"
+                >
                     <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/50 shadow-md group-hover:shadow-xl group-hover:border-orange-100 transition-all duration-300 mb-3 group-hover:-translate-y-2 bg-white/30 backdrop-blur-sm">
                       {cat.image ? (
                         <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />

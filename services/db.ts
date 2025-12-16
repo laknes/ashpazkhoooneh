@@ -13,13 +13,13 @@ const SEED_DATA = {
         ],
         contact: { phone: '021-12345678', email: 'info@ashpazkhoneh.com', address: 'تهران، خیابان ولیعصر' },
         socialMedia: { instagram: '', twitter: '', linkedin: '', telegram: '' },
+        favicon: '',
         sms: { provider: 'kavenegar', apiKey: '', lineNumber: '' },
         payment: { activeGateway: 'none', zarinpalMerchant: '', nextpayToken: '', zibalMerchant: '', isSandbox: true },
         shipping: { baseCost: 150000, freeThreshold: 5000000, apiToken: '' },
         seo: { defaultTitle: 'آشپزخونه', titleTemplate: '%s | آشپزخونه', defaultDescription: '', defaultKeywords: '', siteUrl: 'https://ashpazkhoneh.ir' },
         ssl: { enabled: false, provider: 'manual', certCrt: '', privateKey: '' },
-        aboutText: 'فروشگاه اینترنتی آشپزخونه...',
-        showAdminDemo: true // Default to showing admin demo button
+        aboutText: 'فروشگاه اینترنتی آشپزخونه...'
     }
 };
 
@@ -61,6 +61,16 @@ export const db = {
   system: {
     sendHeartbeat: async (sessionId: string) => {
         await fetchJson('/heartbeat', { method: 'POST', body: JSON.stringify({ sessionId }) });
+    },
+    // Backup & Restore
+    downloadBackup: () => {
+        window.open('/api/backup', '_blank');
+    },
+    restoreBackup: async (fileContent: any) => {
+        return await fetchJson('/restore', { 
+            method: 'POST', 
+            body: JSON.stringify(fileContent) 
+        });
     }
   },
   products: {

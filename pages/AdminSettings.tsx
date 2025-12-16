@@ -2,20 +2,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../services/db';
 import { SiteSettings, HeroSlide } from '../types';
-import { Save, Plus, Trash2, AlertCircle, Instagram, Twitter, Linkedin, Send, Image as ImageIcon, MessageSquare, CreditCard, Truck, ExternalLink, Search, Lock, Upload, CloudLightning, Cloud, CheckCircle, XCircle } from 'lucide-react';
+import { Save, Plus, Trash2, AlertCircle, Instagram, Twitter, Linkedin, Send, Image as ImageIcon, MessageSquare, CreditCard, Truck, ExternalLink, Search, Lock, Upload, CloudLightning, Cloud, CheckCircle, XCircle, Database, Download, RefreshCw, AlertTriangle } from 'lucide-react';
 import ImageUploader from '../components/ImageUploader';
 
 const AdminSettings: React.FC = () => {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
-  const [activeTab, setActiveTab] = useState<'GENERAL' | 'SEO' | 'API' | 'CLOUD'>('GENERAL');
+  const [activeTab, setActiveTab] = useState<'GENERAL' | 'SEO' | 'API' | 'CLOUD' | 'DB'>('GENERAL');
   
-  // File inputs for SSL
+  // File inputs
   const certInputRef = useRef<HTMLInputElement>(null);
   const keyInputRef = useRef<HTMLInputElement>(null);
+  const restoreInputRef = useRef<HTMLInputElement>(null);
 
   // Cloudinary Test State
   const [isTestingCloud, setIsTestingCloud] = useState(false);
   const [testCloudResult, setTestCloudResult] = useState<'SUCCESS' | 'ERROR' | null>(null);
+  
+  // Restore State
+  const [isRestoring, setIsRestoring] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -49,6 +53,12 @@ const AdminSettings: React.FC = () => {
 
       await db.settings.update(settings);
       alert('تنظیمات با موفقیت ذخیره شد.');
+      
+      // Force refresh favicon
+      if (settings.favicon) {
+          let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+          if (link) link.href = settings.favicon;
+      }
     }
   };
 
@@ -79,6 +89,39 @@ const AdminSettings: React.FC = () => {
       } finally {
           setIsTestingCloud(false);
       }
+  };
+
+  const handleBackupDownload = () => {
+      db.system.downloadBackup();
+  };
+
+  const handleRestoreFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+          if (confirm('هشدار: بازگردانی نسخه پشتیبان تمام اطلاعات فعلی (محصولات، سفارشات، کاربران و...) را حذف و با اطلاعات فایل جایگزین می‌کند. آیا مطمئن هستید؟')) {
+              const reader = new FileReader();
+              reader.onload = async (event) => {
+                  try {
+                      const jsonContent = JSON.parse(event.target?.result as string);
+                      setIsRestoring(true);
+                      const result = await db.system.restoreBackup(jsonContent);
+                      if (result && result.success) {
+                          alert('دیتابیس با موفقیت بازگردانی شد. صفحه رفرش می‌شود.');
+                          window.location.reload();
+                      } else {
+                          alert('خطا در بازگردانی دیتابیس: ' + (result?.error || 'Unknown error'));
+                      }
+                  } catch (err) {
+                      alert('فایل انتخاب شده نامعتبر است یا فرمت JSON صحیح ندارد.');
+                  } finally {
+                      setIsRestoring(false);
+                  }
+              };
+              reader.readAsText(file);
+          }
+      }
+      // Reset input
+      if (e.target) e.target.value = '';
   };
 
   const addSlide = () => {
@@ -165,7 +208,14 @@ const AdminSettings: React.FC = () => {
             className={`pb-3 px-2 font-medium transition-colors whitespace-nowrap flex items-center ${activeTab === 'CLOUD' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-800'}`}
           >
               <Cloud size={16} className="ml-1" />
-              فضای ابری (Cloud)
+              فضای ابری
+          </button>
+          <button 
+            onClick={() => setActiveTab('DB')}
+            className={`pb-3 px-2 font-medium transition-colors whitespace-nowrap flex items-center ${activeTab === 'DB' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-800'}`}
+          >
+              <Database size={16} className="ml-1" />
+              پشتیبان‌گیری
           </button>
       </div>
       
@@ -174,6 +224,27 @@ const AdminSettings: React.FC = () => {
         {/* GENERAL TAB */}
         {activeTab === 'GENERAL' && (
             <>
+                {/* Visual Identity */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h2 className="text-xl font-bold mb-4 border-b pb-2">هویت بصری</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">آیکون سایت (Favicon)</label>
+                            <div className="bg-blue-50 text-blue-800 text-xs px-2 py-1.5 rounded-lg mb-2 flex items-center">
+                                <ImageIcon size={12} className="ml-1" />
+                                فرمت PNG یا ICO (مربع، ترجیحاً ۶۴x۶۴)
+                            </div>
+                            <ImageUploader 
+                                currentImage={settings.favicon}
+                                onImageSelect={(base64) => setSettings({...settings, favicon: base64})}
+                                className="h-32"
+                                maxWidth={128}
+                                maxHeight={128}
+                            />
+                        </div>
+                    </div>
+                </div>
+
                 {/* Hero Slides Management */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex justify-between items-center mb-6 border-b pb-4">
@@ -818,6 +889,74 @@ const AdminSettings: React.FC = () => {
                             {testCloudResult === 'ERROR' && <XCircle size={16} />}
                         </button>
                         {testCloudResult === 'SUCCESS' && <span className="text-xs text-green-600">اتصال با موفقیت برقرار شد.</span>}
+                    </div>
+                </div>
+             </div>
+        )}
+
+        {/* DATABASE BACKUP & RESTORE TAB */}
+        {activeTab === 'DB' && (
+             <div className="space-y-6">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-3 border-b pb-4 mb-6">
+                        <div className="bg-purple-100 p-2 rounded-full text-purple-600">
+                            <Database size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-800">مدیریت دیتابیس</h2>
+                            <p className="text-sm text-gray-500">پشتیبان‌گیری و بازگردانی اطلاعات فروشگاه</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Download Backup */}
+                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 hover:border-purple-200 transition-colors">
+                            <h3 className="font-bold text-gray-800 mb-2 flex items-center">
+                                <Download size={20} className="ml-2 text-primary" />
+                                دانلود نسخه پشتیبان
+                            </h3>
+                            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                                تمام اطلاعات سایت شامل محصولات، کاربران، سفارشات و تنظیمات در قالب یک فایل JSON دانلود می‌شود. این فایل را در جای امن نگه دارید.
+                            </p>
+                            <button 
+                                type="button"
+                                onClick={handleBackupDownload}
+                                className="w-full bg-white text-primary border border-primary hover:bg-orange-50 font-bold py-3 rounded-xl transition-all active:scale-95 shadow-sm"
+                            >
+                                دانلود فایل دیتابیس (JSON)
+                            </button>
+                        </div>
+
+                        {/* Restore Backup */}
+                        <div className="bg-red-50 p-6 rounded-xl border border-red-100 hover:border-red-200 transition-colors">
+                            <h3 className="font-bold text-red-800 mb-2 flex items-center">
+                                <RefreshCw size={20} className="ml-2" />
+                                بازگردانی دیتابیس
+                            </h3>
+                            <p className="text-sm text-red-700 mb-4 leading-relaxed">
+                                <span className="font-bold flex items-center mb-1"><AlertTriangle size={14} className="ml-1"/> هشدار جدی:</span>
+                                با آپلود فایل پشتیبان، تمام اطلاعات فعلی سایت <span className="underline decoration-wavy">حذف و جایگزین</span> خواهد شد. این عملیات قابل بازگشت نیست.
+                            </p>
+                            
+                            <div className="relative">
+                                <input 
+                                    type="file" 
+                                    ref={restoreInputRef}
+                                    accept=".json"
+                                    onChange={handleRestoreFileSelect}
+                                    className="hidden"
+                                    disabled={isRestoring}
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={() => restoreInputRef.current?.click()}
+                                    disabled={isRestoring}
+                                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-red-200 disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    {isRestoring ? 'در حال بازگردانی...' : 'انتخاب فایل و بازگردانی'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
              </div>

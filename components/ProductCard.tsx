@@ -68,9 +68,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     onClick(product);
   };
 
-  // Helper to optimize image URLs (especially for Unsplash)
+  // Helper to optimize image URLs (especially for Unsplash and Cloudinary)
   const getOptimizedImageUrl = (url: string, width = 400) => {
     if (!url || imgError) return 'https://placehold.co/400x400/f3f4f6/9ca3af?text=No+Image'; // Fallback
+    
+    // Optimize Cloudinary Images
+    if (url.includes('cloudinary.com') && url.includes('/upload/')) {
+        // Insert resizing parameters
+        // Example: .../upload/q_auto,f_auto/v1234/img.jpg -> .../upload/w_400,c_limit,q_auto,f_auto/v1234/img.jpg
+        return url.replace('/upload/', `/upload/w_${width},c_limit/`);
+    }
+
+    // Optimize Unsplash Images
     if (url.includes('images.unsplash.com')) {
       const separator = url.includes('?') ? '&' : '?';
       let newUrl = url;

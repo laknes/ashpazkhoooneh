@@ -50,87 +50,81 @@ npm start
 
 ## 🔄 راهنمای بروزرسانی (Update Script)
 
-برای بروزرسانی نسخه برنامه روی سرور بدون از دست رفتن اطلاعات و بدون تغییر تنظیمات سرور، از فایل `update.bash` استفاده کنید.
+برای بروزرسانی سریع پروژه روی سرور، فایل `update.bash` را با محتوای زیر ایجاد کنید:
 
-۱. اگر این فایل موجود نیست، آن را ایجاد کنید:
 ```bash
 nano update.bash
 ```
 
-۲. کدهای زیر را در آن قرار دهید:
+**محتوای فایل `update.bash`:**
 
 ```bash
 #!/bin/bash
 
-# Color definitions
+# Colors
 GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-echo -e "${BLUE}>>> Starting Update Process...${NC}"
+echo -e "${GREEN}Starting Update Process...${NC}"
 
-# 1. Pull latest code (Uncomment if using Git on server)
-# echo -e "${GREEN}1. Pulling latest changes...${NC}"
-# git pull
+# 1. Pull latest changes
+echo -e "${GREEN}Pulling from Git...${NC}"
+git pull
 
-# 2. Install Dependencies (in case package.json changed)
-echo -e "${GREEN}2. Installing dependencies...${NC}"
+# 2. Install Dependencies
+echo -e "${GREEN}Installing Dependencies...${NC}"
 npm install
 
-# 3. Build Project (Generate dist folder)
-echo -e "${GREEN}3. Building application...${NC}"
+# 3. Build React App
+echo -e "${GREEN}Building Frontend...${NC}"
 npm run build
 
-# 4. Restart Application via PM2
-echo -e "${GREEN}4. Restarting PM2 process...${NC}"
-
-# Load env vars
-if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
-fi
-
-if pm2 list | grep -q "ashpazkhoneh"; then
-    pm2 reload ashpazkhoneh --update-env
+# 4. Restart Server (PM2)
+echo -e "${GREEN}Restarting PM2 Process...${NC}"
+if command -v pm2 &> /dev/null; then
+    pm2 reload ashpazkhoneh 2>/dev/null || pm2 start server.js --name ashpazkhoneh
+    pm2 save
 else
-    pm2 start server.js --name "ashpazkhoneh"
+    echo "PM2 not found. Please install PM2 globally: npm install -g pm2"
 fi
 
-echo -e "${BLUE}>>> Update Complete Successfully!${NC}"
+echo -e "${GREEN}Update Completed Successfully!${NC}"
 ```
 
-۳. به فایل دسترسی اجرا بدهید:
+سپس دسترسی اجرا به آن بدهید و اجرا کنید:
+
 ```bash
 chmod +x update.bash
-```
-
-۴. برای آپدیت سایت کافیست دستور زیر را اجرا کنید:
-```bash
 ./update.bash
 ```
 
 ---
 
-## 🔐 راهنمای تنظیم SSL (Cloudflare / Let's Encrypt)
+## 🔐 راهنمای تنظیم SSL و رفع خطاها (Fixer Script)
 
-اگر اس اس ال به درستی کار نمی‌کند یا از **Cloudflare** استفاده می‌کنید، از اسکریپت جدید `ssl.sh` استفاده کنید که امکان پیکربندی دستی گواهینامه (Certificate) را نیز دارد.
+اگر با خطای 502، مشکل SSL یا خطاهای Cloudflare مواجه هستید، فایل `ssl.sh` را با محتوای زیر ایجاد کنید. این اسکریپت همه کارها را خودکار انجام می‌دهد.
 
-۱. فایل `ssl.sh` را با محتوای زیر ایجاد یا بروزرسانی کنید:
+```bash
+nano ssl.sh
+```
+
+**محتوای فایل `ssl.sh`:**
 
 ```bash
 #!/bin/bash
 
 # Configuration
-APP_PORT=3001
+DB_FILE="./database.json"
+ENV_FILE="./.env"
 
 # Colors
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 echo -e "${BLUE}==============================================${NC}"
-echo -e "${BLUE}   Nginx SSL Configuration Helper             ${NC}"
+echo -e "${BLUE}   Nginx SSL Configuration & Fixer            ${NC}"
 echo -e "${BLUE}==============================================${NC}"
 
 # Check for root
@@ -139,287 +133,61 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# Check if Nginx is installed
-if ! command -v nginx &> /dev/null; then
-    echo -e "${YELLOW}Nginx not found. Installing...${NC}"
-    apt-get update
-    apt-get install -y nginx
+# 0. Firewall Check (Fix for Error 521)
+if command -v ufw &> /dev/null; then
+    echo -e "${GREEN}Configuring Firewall (UFW) to allow ports 80, 443, 3000...${NC}"
+    ufw allow 'Nginx Full'
+    ufw allow OpenSSH
+    ufw allow 3000
+    # We do not force enable UFW to avoid locking user out if ssh is non-standard, 
+    # but 'allow' commands ensure rules exist if it IS enabled.
 fi
+
+# 1. Detect Port from .env
+APP_PORT=3000 # Default fallback
+if [ -f "$ENV_FILE" ]; then
+    DETECTED_PORT=$(grep "^PORT=" "$ENV_FILE" | cut -d '=' -f2)
+    if [ ! -z "$DETECTED_PORT" ]; then
+        APP_PORT=$DETECTED_PORT
+        echo -e "${GREEN}Detected App Port from .env: $APP_PORT${NC}"
+    fi
+fi
+
+# Install dependencies if missing
+if ! command -v jq &> /dev/null; then apt-get update && apt-get install -y jq; fi
+if ! command -v nginx &> /dev/null; then apt-get update && apt-get install -y nginx; fi
 
 # Input Domain
 read -p "Enter Domain Name (e.g., example.com): " DOMAIN
-if [ -z "$DOMAIN" ]; then
-    echo "Domain is required."
-    exit 1
+if [ -z "$DOMAIN" ]; then echo "Domain required."; exit 1; fi
+
+# Ask about 'www' subdomain
+read -p "Include 'www' subdomain? (y/n) [y]: " INCLUDE_WWW
+INCLUDE_WWW=${INCLUDE_WWW:-y}
+
+DOMAINS_ARG="-d $DOMAIN"
+SERVER_NAME_ARG="$DOMAIN"
+
+if [[ "$INCLUDE_WWW" =~ ^[Yy]$ ]]; then
+    DOMAINS_ARG="-d $DOMAIN -d www.$DOMAIN"
+    SERVER_NAME_ARG="$DOMAIN www.$DOMAIN"
 fi
 
 echo ""
 echo "Select SSL Method:"
-echo "1) Let's Encrypt (Auto - via Certbot)"
-echo "2) Cloudflare / Custom Certificate (Manual - Origin CA)"
+echo "1) Let's Encrypt (Auto - Free)"
+echo "2) Cloudflare / Custom (From Admin Panel DB)"
 read -p "Choose [1 or 2]: " CHOICE
 
 if [ "$CHOICE" == "1" ]; then
-    # --- LET'S ENCRYPT ---
-    echo -e "${GREEN}>>> Configuring Let's Encrypt...${NC}"
-    
-    read -p "Enter Email Address (for Let's Encrypt): " EMAIL
-    if [ -z "$EMAIL" ]; then
-        echo "Email is required."
-        exit 1
-    fi
-
-    # Install Certbot
+    read -p "Enter Email: " EMAIL
     apt-get install -y certbot python3-certbot-nginx
-
-    # Basic Nginx Config for Certbot to find
+    
+    # Simple config for Certbot validation
     cat > /etc/nginx/sites-available/$DOMAIN << EOL
 server {
     listen 80;
-    server_name $DOMAIN www.$DOMAIN;
-
-    location / {
-        proxy_pass http://localhost:$APP_PORT;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_cache_bypass \$http_upgrade;
-    }
-}
-EOL
-
-    ln -sf /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
-    rm /etc/nginx/sites-enabled/default 2>/dev/null
-    
-    systemctl restart nginx
-
-    # Obtain Cert
-    certbot --nginx -d $DOMAIN -d www.$DOMAIN -m $EMAIL --agree-tos --non-interactive --redirect
-
-elif [ "$CHOICE" == "2" ]; then
-    # --- CLOUDFLARE / CUSTOM ---
-    echo -e "${GREEN}>>> Configuring Cloudflare / Custom SSL...${NC}"
-    
-    mkdir -p /etc/nginx/ssl
-    
-    echo -e "${YELLOW}Step 1: Origin Certificate${NC}"
-    echo "Please paste the content of your Certificate (.pem/.crt) below."
-    echo "Press CTRL+D when finished."
-    echo "---------------------------------------------------"
-    cat > /etc/nginx/ssl/$DOMAIN.crt
-    echo ""
-    echo "Certificate saved."
-
-    echo -e "${YELLOW}Step 2: Private Key${NC}"
-    echo "Please paste the content of your Private Key (.key) below."
-    echo "Press CTRL+D when finished."
-    echo "---------------------------------------------------"
-    cat > /etc/nginx/ssl/$DOMAIN.key
-    echo ""
-    echo "Private key saved."
-
-    # Validate files are not empty
-    if [ ! -s "/etc/nginx/ssl/$DOMAIN.crt" ] || [ ! -s "/etc/nginx/ssl/$DOMAIN.key" ]; then
-        echo -e "${RED}Error: Certificate or Key file is empty.${NC}"
-        exit 1
-    fi
-
-    echo -e "${GREEN}Step 3: Generating Nginx Config...${NC}"
-    
-    # Cloudflare/Custom Nginx Config
-    cat > /etc/nginx/sites-available/$DOMAIN << EOL
-server {
-    listen 80;
-    server_name $DOMAIN www.$DOMAIN;
-    # Redirect all HTTP to HTTPS
-    return 301 https://\$host\$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name $DOMAIN www.$DOMAIN;
-
-    # SSL Configuration
-    ssl_certificate /etc/nginx/ssl/$DOMAIN.crt;
-    ssl_certificate_key /etc/nginx/ssl/$DOMAIN.key;
-    
-    # Recommended settings for Cloudflare Origin CA
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
-    ssl_prefer_server_ciphers off;
-
-    location / {
-        proxy_pass http://localhost:$APP_PORT;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_cache_bypass \$http_upgrade;
-    }
-}
-EOL
-
-    ln -sf /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
-    rm /etc/nginx/sites-enabled/default 2>/dev/null
-
-    echo -e "${GREEN}Step 4: Testing & Reloading Nginx...${NC}"
-    nginx -t
-    if [ $? -eq 0 ]; then
-        systemctl restart nginx
-        echo -e "${BLUE}>>> Success! SSL configured for https://$DOMAIN${NC}"
-        echo -e "${BLUE}Make sure Cloudflare SSL/TLS mode is set to 'Full (Strict)'${NC}"
-    else
-        echo -e "${RED}Nginx configuration failed. Please check your certificate files.${NC}"
-        exit 1
-    fi
-
-else
-    echo "Invalid choice."
-    exit 1
-fi
-```
-
-۲. به فایل دسترسی اجرا بدهید:
-```bash
-chmod +x ssl.sh
-```
-
-۳. اسکریپت را اجرا کنید:
-```bash
-./ssl.sh
-```
-
-۴. گزینه **۲** (Cloudflare) را انتخاب کنید. سپس محتوای **Origin Certificate** و **Private Key** را که از پنل Cloudflare دریافت کرده‌اید، کپی و در ترمینال پیست کنید (با زدن `Ctrl+D` ذخیره کنید).
-
-> **نکته:** حتماً در پنل Cloudflare، حالت SSL/TLS را روی **Full (Strict)** قرار دهید.
-
----
-
-## 🌐 راهنمای استقرار روی سرور (نصب اتوماتیک کامل)
-
-برای راه‌اندازی سریع پروژه روی سرور (VPS)، اسکریپت زیر تمام مراحل نصب، کانفیگ دیتابیس، تنظیم دامنه، دریافت SSL و راه‌اندازی را به صورت خودکار انجام می‌دهد.
-
-۱. در سرور خود یک فایل جدید ایجاد کنید:
-```bash
-nano install.bash
-```
-
-۲. کدهای زیر را در آن کپی کنید:
-
-```bash
-#!/bin/bash
-set -e # Exit on error
-
-# Colors for better visibility
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
-
-echo -e "${BLUE}=========================================${NC}"
-echo -e "${BLUE}   Ashpazkhoneh Auto Installer   ${NC}"
-echo -e "${BLUE}=========================================${NC}"
-
-# Check for root
-if [ "$EUID" -ne 0 ]; then
-  echo -e "${RED}Please run this script as root or with sudo.${NC}"
-  exit
-fi
-
-# 1. Gather Configuration
-echo ""
-echo -e "${GREEN}--- Domain & Network Settings ---${NC}"
-read -p "Domain Name (without http/www, e.g., example.com): " DOMAIN_NAME
-read -p "Email for SSL Certificate (e.g., info@example.com): " SSL_EMAIL
-read -p "App Internal Port [Default: 3000]: " APP_PORT
-APP_PORT=${APP_PORT:-3000}
-
-echo ""
-echo -e "${GREEN}--- AI Settings ---${NC}"
-read -p "Gemini API Key (for AI Assistant): " GEMINI_API_KEY
-
-echo ""
-echo -e "${GREEN}--- Database Settings ---${NC}"
-read -p "Database Name: " DB_NAME
-read -p "Database User: " DB_USER
-read -s -p "Database Password: " DB_PASS
-echo ""
-
-echo ""
-echo -e "${GREEN}--- Admin Settings ---${NC}"
-read -p "Admin Username: " ADMIN_USER
-read -p "Admin Email: " ADMIN_EMAIL
-read -s -p "Admin Password: " ADMIN_PASS
-echo ""
-
-# 2. Save Configuration to .env
-echo ""
-echo "Saving configuration..."
-cat > .env << EOL
-PORT=$APP_PORT
-API_KEY=$GEMINI_API_KEY
-DB_HOST=localhost
-DB_NAME=$DB_NAME
-DB_USER=$DB_USER
-DB_PASS=$DB_PASS
-ADMIN_INIT_USER=$ADMIN_USER
-ADMIN_INIT_EMAIL=$ADMIN_EMAIL
-ADMIN_INIT_PASS=$ADMIN_PASS
-EOL
-echo ".env file created."
-
-# 3. System Update & Dependencies
-echo ""
-echo "Updating system and installing Node.js, Nginx, Certbot..."
-apt update
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt install -y nodejs nginx certbot python3-certbot-nginx
-
-# 4. Install Process Managers
-echo ""
-echo "Installing PM2..."
-npm install -g pm2
-
-# 5. Install Project Dependencies & Build
-echo ""
-echo "Installing project packages..."
-if [ -f "package.json" ]; then
-    # Try legacy peer deps if standard install fails
-    npm install || npm install --legacy-peer-deps
-    echo "Building application..."
-    npm run build
-else
-    echo -e "${RED}Error: package.json not found.${NC}"
-    exit 1
-fi
-
-# 6. Start Application with PM2
-echo ""
-echo "Starting application on port $APP_PORT..."
-# Load .env variables into current shell so PM2 inherits them
-export $(grep -v '^#' .env | xargs)
-
-pm2 delete ashpazkhoneh 2>/dev/null || true
-# Start server.js which serves API and Static files
-pm2 start server.js --name "ashpazkhoneh"
-pm2 save
-pm2 startup
-
-# 7. Configure Firewall (Skipped as requested)
-# User requested to handle firewall manually or preserve existing rules.
-
-# 8. Configure Nginx Reverse Proxy
-echo ""
-echo "Configuring Nginx..."
-
-# Create Nginx Config
-# Added default_server to catch IP requests if domain DNS isn't ready
-cat > /etc/nginx/sites-available/$DOMAIN_NAME << EOL
-server {
-    listen 80;
-    server_name $DOMAIN_NAME www.$DOMAIN_NAME;
-
+    server_name $SERVER_NAME_ARG;
     location / {
         proxy_pass http://127.0.0.1:$APP_PORT;
         proxy_http_version 1.1;
@@ -430,36 +198,89 @@ server {
     }
 }
 EOL
-
-# Enable Site
-ln -sf /etc/nginx/sites-available/$DOMAIN_NAME /etc/nginx/sites-enabled/
-
-# Cleanup default config and broken links
-echo "Cleaning up Nginx configuration..."
-rm /etc/nginx/sites-enabled/default 2>/dev/null || true
-find -L /etc/nginx/sites-enabled/ -type l -delete
-
-# Test and Restart Nginx
-nginx -t
-if [ $? -eq 0 ]; then
+    ln -sf /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
+    rm /etc/nginx/sites-enabled/default 2>/dev/null
     systemctl restart nginx
-    echo "Nginx configured successfully."
-else
-    echo -e "${RED}Nginx configuration failed.${NC}"
-    exit 1
+    
+    # Run Certbot
+    certbot --nginx $DOMAINS_ARG -m $EMAIL --agree-tos --non-interactive --redirect
+
+elif [ "$CHOICE" == "2" ]; then
+    if [ ! -f "$DB_FILE" ]; then echo "database.json not found."; exit 1; fi
+    CERT=$(jq -r '.settings.ssl.certCrt' "$DB_FILE")
+    KEY=$(jq -r '.settings.ssl.privateKey' "$DB_FILE")
+    
+    if [ -z "$CERT" ] || [ "$CERT" == "null" ]; then echo "Certificates not found in DB."; exit 1; fi
+
+    mkdir -p /etc/nginx/ssl
+    echo "$CERT" > /etc/nginx/ssl/$DOMAIN.crt
+    echo "$KEY" > /etc/nginx/ssl/$DOMAIN.key
+
+    cat > /etc/nginx/sites-available/$DOMAIN << EOL
+server {
+    listen 80;
+    server_name $SERVER_NAME_ARG;
+    return 301 https://\$host\$request_uri;
+}
+server {
+    listen 443 ssl http2;
+    server_name $SERVER_NAME_ARG;
+    ssl_certificate /etc/nginx/ssl/$DOMAIN.crt;
+    ssl_certificate_key /etc/nginx/ssl/$DOMAIN.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    client_max_body_size 50M;
+    location / {
+        proxy_pass http://127.0.0.1:$APP_PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
+EOL
+    ln -sf /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
+    rm /etc/nginx/sites-enabled/default 2>/dev/null
+    nginx -t && systemctl restart nginx
 fi
 
-# 9. SSL & HTTPS
-echo ""
-echo "Obtaining SSL Certificate & Enabling HTTPS..."
-echo -e "${BLUE}Note: Ensure your domain ($DOMAIN_NAME) points to this server IP.${NC}"
-
-# Use --redirect to automatically setup HTTP -> HTTPS
-certbot --nginx --non-interactive --agree-tos --redirect -m $SSL_EMAIL -d $DOMAIN_NAME -d www.$DOMAIN_NAME || echo "SSL setup skipped or failed. Site available via HTTP."
+# RELOAD APP to fix 502
+echo -e "${GREEN}Restarting PM2 to ensure connectivity...${NC}"
+pm2 reload ashpazkhoneh 2>/dev/null || pm2 restart ashpazkhoneh 2>/dev/null
+echo "Done."
 
 echo ""
-echo -e "${GREEN}=========================================${NC}"
-echo -e "${GREEN}   Installation Complete!   ${NC}"
-echo -e "${GREEN}=========================================${NC}"
-echo -e "Your site is now accessible at:"
-echo -e "https://$DOMAIN_NAME"
+echo -e "${RED}IMPORTANT:${NC} If using Cloudflare, ensure SSL/TLS is set to 'Full (Strict)' and DNS Proxy (Orange Cloud) is ON."
+```
+
+اجرا:
+```bash
+chmod +x ssl.sh
+./ssl.sh
+```
+
+---
+
+## ❓ عیب‌یابی (Troubleshooting)
+
+### 🔴 مشکل: خطای `Error 521: Web server is down`
+این خطا در Cloudflare یعنی سرور شما به درخواست‌ها پاسخ نمی‌دهد. دلایل رایج:
+1. **Nginx خاموش است:** نصب SSL قبلی شکست خورده و Nginx متوقف شده است. اسکریپت `ssl.sh` جدید این مورد را حل می‌کند.
+2. **پورت بسته است:** فایروال سرور اجازه ورود به پورت 80 یا 443 را نمی‌دهد. اسکریپت جدید به طور خودکار این پورت‌ها را باز می‌کند.
+3. **گواهی نامعتبر:** اگر از Cloudflare در حالت Full استفاده می‌کنید اما سرور شما فقط روی پورت 80 (بدون SSL) گوش می‌دهد.
+
+**راه حل:**
+فقط کافیست اسکریپت `ssl.sh` جدید را اجرا کنید.
+
+### 🔴 مشکل: خطای `NXDOMAIN`
+- اگر برای `www` رکورد DNS ندارید، در اسکریپت بالا وقتی سوال شد `Include 'www'?` گزینه **n** را بزنید.
+
+### 🔴 مشکل: خطای `NET::ERR_CERT_AUTHORITY_INVALID`
+- **کلاودفلر:** وضعیت SSL را روی **Full (Strict)** بگذارید و DNS را روی حالت پروکسی (ابر نارنجی) تنظیم کنید.
+- **بدون کلاودفلر:** در اسکریپت گزینه ۱ (Let's Encrypt) را انتخاب کنید.
+
+### 🔴 مشکل: خطای `502 Bad Gateway`
+- اسکریپت `ssl.sh` را اجرا کنید تا برنامه را ریستارت کند.

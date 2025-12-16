@@ -25,7 +25,7 @@ const INITIAL_DATA = {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DB_FILE = path.join(__dirname, 'database.json');
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 const app = express();
 
@@ -71,6 +71,56 @@ app.post('/api/heartbeat', (req, res) => {
 
 app.get('/api/stats/active-users', (req, res) => {
   res.json({ count: activeUsers.size });
+});
+
+// --- Backup & Restore ---
+
+// Download Backup
+app.get('/api/backup', (req, res) => {
+  if (fs.existsSync(DB_FILE)) {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    res.download(DB_FILE, `ashpazkhoneh-backup-${timestamp}.json`);
+  } else {
+    res.status(404).json({ error: 'Database file not found' });
+  }
+});
+
+// Restore Backup
+app.post('/api/restore', (req, res) => {
+  try {
+    const data = req.body;
+    
+    // Basic validation to ensure it's likely our DB format
+    if (!data || typeof data !== 'object') {
+        return res.status(400).json({ error: 'Invalid JSON format' });
+    }
+
+    // Optional: Check for critical keys
+    if (!data.products && !data.users && !data.settings) {
+         return res.status(400).json({ error: 'Invalid backup file: Missing critical data' });
+    }
+    
+    // Ensure structure matches
+    const safeData = {
+        products: data.products || [],
+        orders: data.orders || [],
+        users: data.users || [],
+        posts: data.posts || [],
+        categories: data.categories || [],
+        settings: data.settings || {},
+        reviews: data.reviews || [],
+        coupons: data.coupons || [],
+        wishlist: data.wishlist || []
+    };
+
+    saveDb(safeData);
+    console.log('Database restored from backup');
+    
+    res.json({ success: true, message: 'Database restored successfully' });
+  } catch (err) {
+    console.error('Restore failed:', err);
+    res.status(500).json({ error: 'Failed to restore database', details: err.message });
+  }
 });
 
 // Products
@@ -209,7 +259,14 @@ app.post('/api/upload', async (req, res) => {
             folder: 'ashpazkhoneh'
         });
         
-        res.json({ url: uploadResponse.secure_url });
+        // Auto-optimize URL
+        let url = uploadResponse.secure_url;
+        // Inject q_auto,f_auto if standard upload path
+        if (url.includes('/upload/') && !url.includes('/q_auto,f_auto/')) {
+            url = url.replace('/upload/', '/upload/q_auto,f_auto/');
+        }
+
+        res.json({ url });
     } catch (err) {
         console.error("Cloudinary Upload Error:", err);
         res.status(500).json({ error: 'Upload failed', details: err.message });
