@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { generateChefResponse, isAiConfigured } from '../services/geminiService';
 import { ChatMessage } from '../types';
-import { Send, User, Sparkles, BotOff } from 'lucide-react';
+import { Send, User, Sparkles, Bot } from 'lucide-react';
 
 interface AiAssistantProps {
   onLoadingStateChange?: (isLoading: boolean) => void;
@@ -62,7 +62,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ onLoadingStateChange }) => {
             <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 text-center max-w-md w-full relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-gray-200 to-gray-300"></div>
                 <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-400 border border-gray-100">
-                    <BotOff size={40} strokeWidth={1.5} />
+                    <Bot size={40} strokeWidth={1.5} />
                 </div>
                 <h2 className="text-xl font-black text-gray-800 mb-3">دستیار هوشمند غیرفعال است</h2>
                 <p className="text-gray-500 leading-relaxed mb-8 text-sm">
